@@ -14,6 +14,19 @@
 
 > 注意：代码目录已经独立，但 GitHub 远程仓库需要使用你的 GitHub 账号授权后才能创建。具体发布步骤见 [GITHUB_REPO_GUIDE.md](./GITHUB_REPO_GUIDE.md)。
 
+## 部署前必看
+
+这个项目不是纯静态网页，部署时需要 Next.js 服务端环境和数据库。
+
+如果你部署后页面打不开，先确认：
+
+- 部署平台的 Root Directory / 项目根目录设置为 `inquiry-crm`。
+- 已配置 `DATABASE_URL` 和 `AUTH_SECRET` 环境变量。
+- 首次部署后已经执行 `npm run db:push` 和 `npm run db:seed`。
+- 如果用 Vercel、Netlify 等 Serverless 平台，生产环境建议使用 PostgreSQL，不建议用默认 SQLite 文件数据库。
+
+详细说明见 [DEPLOYMENT.md](./DEPLOYMENT.md)。部署后也可以访问 `/setup` 查看部署检查清单，访问 `/api/health` 检查环境变量和数据库连接。
+
 ## 快速开始
 
 ```bash
