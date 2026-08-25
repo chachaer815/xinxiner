@@ -1408,7 +1408,7 @@
       try {
         const r = await callCloud('listQueue');
         const done = (r.items || []).filter(it => ['done','failed','cancelled'].includes(it.status));
-        for (const it of done) { await callCloud('cancelQueue', { id: it._id }); }
+        for (const it of done) { await callCloud('deleteQueue', { id: it._id }); }
         toast('已清空 ' + done.length + ' 条');
         loadQueue();
       } catch (e) { toast('清空失败：' + e.message); }
