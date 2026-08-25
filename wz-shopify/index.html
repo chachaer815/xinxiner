@@ -107,6 +107,11 @@
     }
     .shop-name { font-weight: 700; font-size: 16px; color: var(--ink); }
     .shop-store { font-size: 13px; color: var(--soft); margin: 4px 0 10px; word-break: break-all; }
+    .recent-table { table-layout: fixed; width: 100%; }
+    .recent-table th:first-child, .recent-table td:first-child { width: 38%; word-break: break-all; }
+    .recent-table td { word-break: break-word; vertical-align: top; }
+    .queue-card { overflow: hidden; }
+    .queue-card .shop-item { word-break: break-all; }
 
     .hint { font-size: 13px; color: var(--soft); margin-top: 10px; line-height: 1.6; }
     .hint.error { color: #e04a86; }
@@ -310,6 +315,20 @@
       <div id="batchProgressBar" class="progress-bar" style="display:none;"><div class="fill" id="batchProgressFill" style="width:0%;"></div></div>
       <div id="batchTableWrap" style="display:none; margin-top:14px;">
         <div id="batchListBody"></div>
+        <div id="batchScheduleWrap" style="display:none; margin-top:10px; background:#f8f4ff; border-radius:12px; padding:10px 12px;">
+          <label class="label" style="margin-bottom:6px;"><input type="checkbox" id="batchScheduleOn"> 开启批量定时</label>
+          <div id="batchScheduleOpts" style="display:none; margin-top:8px;">
+            <div class="row" style="gap:8px; align-items:center;">
+              <span>每隔</span>
+              <select class="input" id="batchInterval" style="width:80px;">
+                <option value="1">1分钟</option><option value="2">2分钟</option>
+                <option value="3">3分钟</option><option value="5" selected>5分钟</option>
+                <option value="10">10分钟</option><option value="15">15分钟</option>
+                <option value="20">20分钟</option><option value="30">30分钟</option>
+              </select>
+            </div>
+          </div>
+        </div>
         <button class="btn btn-primary btn-block" id="btnBatchRun" style="margin-top:14px;">✅ 批量创建并上架</button>
       </div>
     </div>
@@ -419,6 +438,8 @@
       <div class="topbar">
         <span class="h2" style="margin:0;">最近发品</span>
         <div class="row">
+          <label class='checkline'><input type='checkbox' id='selectAllRecent'> 全选本页</label>
+          <button class='btn btn-primary btn-mini' id='bulkEditBtn' style='display:none;'>🛠️ 批量编辑选中 (<span id='bulkSelCount'>0</span>)</button>
           <button class="btn btn-ghost btn-mini" id="refreshRecentBtn">刷新</button>
           <button class="btn btn-ghost btn-mini" id="prevPageBtn">上一页</button>
           <button class="btn btn-ghost btn-mini" id="nextPageBtn">下一页</button>
@@ -427,15 +448,53 @@
       <div class="recent-search">
         <input class="input" id="recentSearchInput" placeholder="搜索型号或 SKU...">
       </div>
-      <table style="margin-top:12px;">
-        <thead><tr><th>商品</th><th>状态</th><th>售价</th><th>SKU</th><th>创建时间</th><th>操作</th></tr></thead>
-        <tbody id="recentBody"><tr><td colspan="5" class="hint">加载中…</td></tr></tbody>
+      <table class="recent-table" style="margin-top:12px;width:100%;">
+        <thead><tr><th style='width:38px;'><input type='checkbox' id='selectAllRecentHead'></th><th>商品</th><th>状态</th><th>售价</th><th>SKU</th><th>创建时间</th><th>操作</th></tr></thead>
+        <tbody id="recentBody"><tr><td colspan="7" class="hint">加载中…</td></tr></tbody>
       </table>
+    </div>
+
+    <!-- 批量编辑已发布产品 -->
+    <div id='bulkEditPanel' class='card' style='display:none;'>
+      <div class='h2'>🛠️ 批量编辑已发布产品</div>
+      <div class='hint'>已选 <b id='bulkCount'>0</b> 个产品。勾选要修改的字段，未勾选的保持不变。</div>
+
+      <label class='checkline' style='margin-top:10px;'><input type='checkbox' id='bulkImgOn' checked> 🔄 重新匹配图片</label>
+      <div id='bulkImgOpts' style='margin:6px 0 10px 24px;'>
+        <label class='checkline'><input type='radio' name='bulkImgMode' value='search' checked> 按型号/SKU 从图片库重新搜索（推荐）</label><br>
+        <label class='checkline'><input type='radio' name='bulkImgMode' value='unified'> 统一使用一张新图（下方上传）</label>
+        <div id='bulkUnifiedWrap' style='display:none; margin-top:6px;'>
+          <input type='file' id='bulkUnifiedFile' accept='image/*' style='font-size:12px;'>
+        </div>
+      </div>
+
+      <label class='checkline' style='margin-top:6px;'><input type='checkbox' id='bulkTypeOn'> 🏷️ 修改产品类型 (Product Type)</label>
+      <input class='input' id='bulkType' placeholder='例如 Pressure Transmitter' style='margin:6px 0 10px 24px; display:none;'>
+
+      <label class='checkline' style='margin-top:6px;'><input type='checkbox' id='bulkTagsOn'> 🔖 修改标记 Tags</label>
+      <div id='bulkTagsOpts' style='margin:6px 0 10px 24px; display:none;'>
+        <input class='input' id='bulkTags' placeholder='逗号分隔，如 Valve, Industrial'>
+        <label class='checkline' style='margin-top:6px;'><input type='checkbox' id='bulkTagsAppend' checked> 追加到原有 Tags（不勾则覆盖）</label>
+      </div>
+
+      <label class='checkline' style='margin-top:6px;'><input type='checkbox' id='bulkStatusOn'> 📦 修改上架状态</label>
+      <select class='input' id='bulkStatus' style='margin:6px 0 10px 24px; display:none; width:160px;'>
+        <option value='ACTIVE'>上架 (ACTIVE)</option>
+        <option value='DRAFT'>转草稿 (DRAFT)</option>
+        <option value='ARCHIVED'>归档 (ARCHIVED)</option>
+      </select>
+
+      <div class='progress' id='bulkProgress' style='display:none; margin-top:10px;'><div class='spin'></div><span id='bulkProgressText'></span></div>
+      <div class='progress-bar' id='bulkProgressBar' style='display:none; margin-top:8px;'><div class='fill' id='bulkProgressFill' style='width:0%;'></div></div>
+      <div class='row' style='margin-top:14px;'>
+        <button class='btn btn-primary btn-block' id='bulkRunBtn'>✅ 应用到选中产品</button>
+        <button class='btn btn-ghost btn-mini' id='bulkCloseBtn' style='margin-left:8px;'>收起</button>
+      </div>
     </div>
 
     <div class="card">
       <div class="h2">定时发品队列</div>
-      <div id="queueList"></div>
+      <div id="queueList" class="queue-card"></div>
       <div id="queueEmpty" class="hint" style="display:none;">暂无定时任务</div>
       <button class="btn btn-ghost btn-block" id="refreshQueueBtn">🔄 刷新队列</button>
     </div>
@@ -458,6 +517,11 @@
     const RECENT_SEARCH_QUERY = `query SearchProducts($query: String!) { products(first: 20, query: $query, sortKey: CREATED_AT, reverse: true) { edges { node { id title handle status createdAt featuredMedia { ... on MediaImage { preview { image { url } } } } variants(first: 1) { edges { node { price sku } } } resourcePublicationsCount(onlyPublished: true) { count } } } } }`;
     const CHECK_SKU_QUERY = `query CheckSku($query: String!) { productVariants(first: 3, query: $query) { edges { node { id sku product { id title status } } } } }`;
     const PRODUCT_CREATE = `mutation CreateProduct($product: ProductCreateInput!, $media: [CreateMediaInput!]) { productCreate(product: $product, media: $media) { product { id handle title seo { title description } variants(first: 1) { edges { node { id } } } } userErrors { field message } } }`;
+    const PRODUCT_MEDIA_QUERY = `query ProductMedia($id: ID!) { product(id: $id) { id media(first: 50) { edges { node { id ... on MediaImage { preview { image { url } } } } } } } }`;
+    const PRODUCT_UPDATE = `mutation UpdateProduct($id: ID!, $product: ProductInput!) { productUpdate(productId: $id, product: $product) { product { id title } userErrors { field message } } }`;
+    const MEDIA_DELETE = `mutation DeleteMedia($productId: ID!, $mediaIds: [ID!]!) { productDeleteMedia(productId: $productId, mediaIds: $mediaIds) { deletedMediaIds userErrors { field message } } }`;
+    const MEDIA_CREATE = `mutation CreateMedia($productId: ID!, $media: [CreateMediaInput!]!) { productCreateMedia(productId: $productId, media: $media) { media { id } userErrors { field message } } }`;
+    const PRODUCT_TAGS_QUERY = `query ProductTags($id: ID!) { product(id: $id) { tags } }`;
     const VARIANTS_UPDATE = `mutation UpdateDefaultVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) { productVariantsBulkUpdate(productId: $productId, variants: $variants) { productVariants { id price compareAtPrice barcode inventoryPolicy inventoryItem { id sku } } userErrors { field message } } }`;
     const INVENTORY_SET = `mutation SetInventory($input: InventorySetQuantitiesInput!) { inventorySetQuantities(input: $input) { inventoryAdjustmentGroup { id } userErrors { field message } } }`;
     const PUBLISH_MUTATION = `mutation PublishProduct($id: ID!, $input: [PublicationInput!]!) { publishablePublish(id: $id, input: $input) { userErrors { field message } } }`;
@@ -621,6 +685,9 @@
       recentProducts: [], recentPageInfo: null, recentLoading: false, recentError: '',
       creating: false, createdTitle: '', createdHandle: '', createError: '', createWarning: '',
       recentSearchQuery: '',
+      bulkEditing: false, bulkSelected: [], bulkImageMode: 'search', bulkUploadImage: null,
+      bulkDoType: false, bulkTypeValue: '', bulkDoTags: false, bulkTagsValue: '', bulkTagsAppend: true,
+      bulkDoStatus: false, bulkStatusValue: 'ACTIVE', bulkRunning: false,
     };
 
     // ===== 工具函数 =====
@@ -784,9 +851,9 @@
     }
     function renderRecent() {
       const body = $('recentBody');
-      if (S.recentLoading) { body.innerHTML = '<tr><td colspan="6" class="hint">加载中…</td></tr>'; return; }
-      if (S.recentError) { body.innerHTML = `<tr><td colspan="6" class="hint error">${esc(S.recentError)}</td></tr>`; return; }
-      if (S.recentProducts.length === 0) { body.innerHTML = `<tr><td colspan="6" class="hint">${S.recentSearchQuery ? '没搜到匹配的商品' : '还没有商品'}</td></tr>`; return; }
+      if (S.recentLoading) { body.innerHTML = '<tr><td colspan="7" class="hint">加载中…</td></tr>'; bindRecentChecks(); return; }
+      if (S.recentError) { body.innerHTML = `<tr><td colspan="7" class="hint error">${esc(S.recentError)}</td></tr>`; bindRecentChecks(); return; }
+      if (S.recentProducts.length === 0) { body.innerHTML = `<tr><td colspan="7" class="hint">${S.recentSearchQuery ? '没搜到匹配的商品' : '还没有商品'}</td></tr>`; bindRecentChecks(); return; }
       const shopStore = S.shopStores[shopIndex()] || '';
       const adminBase = shopStore ? `https://${shopStore}/admin` : '';
       const storeBase = shopStore ? `https://${shopStore}` : '';
@@ -800,8 +867,10 @@
         const links = [];
         if (adminLink) links.push(`<a class="recent-link" href="${esc(adminLink)}" target="_blank">后台</a>`);
         if (storeLink) links.push(`<a class="recent-link" href="${esc(storeLink)}" target="_blank">前台</a>`);
-        return `<tr><td>${titleCell}</td><td>${item.status === 'ACTIVE' ? '<span class="badge b-ok">已上架</span>' : item.status === 'DRAFT' ? '<span class="badge b-info">草稿</span>' : '<span class="badge b-muted">归档</span>'}</td><td>${item.price ? '$' + item.price : '—'}</td><td>${esc(item.sku || '—')}</td><td class="recent-date">${formatDate(item.createdAt)}</td><td class="recent-actions">${links.join(' ')}</td></tr>`;
+        const checked = S.bulkSelected.includes(item.id) ? 'checked' : '';
+        return `<tr><td><input type='checkbox' class='recent-check' data-id='${esc(item.id)}' data-sku='${esc(item.sku || '')}' ${checked}></td><td>${titleCell}</td><td>${item.status === 'ACTIVE' ? '<span class="badge b-ok">已上架</span>' : item.status === 'DRAFT' ? '<span class="badge b-info">草稿</span>' : '<span class="badge b-muted">归档</span>'}</td><td>${item.price ? '$' + item.price : '—'}</td><td>${esc(item.sku || '—')}</td><td class="recent-date">${formatDate(item.createdAt)}</td><td class="recent-actions">${links.join(' ')}</td></tr>`;
       }).join('');
+      bindRecentChecks();
     }
 
     // ===== 图片搜索 =====
@@ -1063,6 +1132,7 @@
     async function runBatch() {
       const vendor = $('batchVendor').value.trim();
       if (!vendor || S.batchItems.length === 0 || S.batchRunning) return;
+      const scheduleMode = $('batchScheduleOn').checked;
       S.batchRunning = true; $('btnBatchRun').disabled = true;
       $('batchProgress').style.display = 'flex';
       $('batchProgressBar').style.display = 'block';
@@ -1070,7 +1140,9 @@
 
       for (let i = 0; i < S.batchItems.length; i++) {
         const item = S.batchItems[i];
-        $('batchProgressText').textContent = `处理 ${i + 1}/${S.batchItems.length}：${item.model}`;
+        $('batchProgressText').textContent = scheduleMode
+          ? `创建草稿 ${i + 1}/${S.batchItems.length}：${item.model}`
+          : `处理 ${i + 1}/${S.batchItems.length}：${item.model}`;
         $('batchProgressFill').style.width = `${Math.round((i / S.batchItems.length) * 100)}%`;
         item.status = 'processing'; item.message = ''; renderBatchTable();
 
@@ -1080,6 +1152,7 @@
         const imageResult = await collectImagesForModel(item.model);
         const itemTitle = item.title || buildTitleFromInsights(vendor, item.model, analyzeDescription(item.description, item.model), S.titleFormat);
         const itemTags = item.tags.length > 0 ? item.tags : [vendor];
+        const pubStatus = scheduleMode ? 'DRAFT' : 'ACTIVE';
 
         const result = await publishOneProduct({
           vendorName: vendor, productTitle: itemTitle, descriptionSource: item.description, descriptionIsHtml: S.descriptionIsHtml,
@@ -1087,18 +1160,42 @@
           barcodeValue: 'USA', quantity: randomInventoryQuantity(), images: imageResult.images.slice(0, TARGET_IMAGE_COUNT),
           seoTitleValue: buildSeoTitleFromTitle(itemTitle, item.model), metaDescriptionValue: buildMetaDescription(item.description),
           handleValue: buildHandleFromTitle(itemTitle, item.model), pricingValue: randomPricing(),
+          status: pubStatus,
         });
 
         if (result.error) { item.status = 'error'; item.message = result.error; }
-        else { successCount++; item.status = 'success'; item.message = result.warning ? `⚠️ ${result.warning}` : `已附图 ${Math.min(imageResult.images.length, TARGET_IMAGE_COUNT)} 张`; item.handle = result.handle; item.title = result.title; if (result.warning) item.status = 'warning'; }
+        else {
+          successCount++;
+          if (scheduleMode) {
+            const intervalMin = parseInt($('batchInterval').value, 10);
+            const publishAt = new Date(Date.now() + (i + 1) * intervalMin * 60000).toISOString();
+            const key = S.shopKeys[shopIndex()];
+            try {
+              await callCloud('schedule', { key, productId: result.id, publicationIds: S.publicationIds, title: result.title, publishAt });
+              item.status = 'success'; item.message = `⏰ ${intervalMin}分钟后上架`;
+            } catch (e2) { item.status = 'warning'; item.message = '草稿创建成功，定时失败：' + e2.message; }
+          } else {
+            item.status = 'success'; item.message = result.warning ? `⚠️ ${result.warning}` : `已附图 ${Math.min(imageResult.images.length, TARGET_IMAGE_COUNT)} 张`;
+            if (result.warning) item.status = 'warning';
+          }
+          item.handle = result.handle; item.title = result.title;
+        }
         renderBatchTable();
       }
 
       $('batchProgressFill').style.width = '100%';
       $('batchProgress').style.display = 'none';
       $('batchProgressBar').style.display = 'none';
-      if (successCount > 0) { const vw = await saveVendorMemory(vendor); $('batchNotice').textContent = vw ? `完成：成功 ${successCount}/${S.batchItems.length} 个。${vw}` : `完成：成功 ${successCount}/${S.batchItems.length} 个。`; addVendorHistory(vendor); loadRecentProducts(null, 'forward'); }
-      else { $('batchNotice').textContent = '完成：没有产品创建成功。'; }
+      if (successCount > 0) {
+        const vw = await saveVendorMemory(vendor);
+        const suffix = scheduleMode ? `，已加入定时队列，页面底部查看` : (vw ? `。${vw}` : '');
+        $('batchNotice').textContent = `完成：成功 ${successCount}/${S.batchItems.length} 个${suffix}`;
+        addVendorHistory(vendor);
+        if (!scheduleMode) loadRecentProducts(null, 'forward');
+        else loadQueue();
+      } else {
+        $('batchNotice').textContent = '完成：没有产品创建成功。';
+      }
       S.batchRunning = false; $('btnBatchRun').disabled = false;
     }
 
@@ -1112,6 +1209,121 @@
     }
     function onTitleFormatChange() { S.titleFormat = $('titleFormat').value; }
     function onDescFormatChange() { S.descriptionIsHtml = $('descFormat').value === 'html'; $('descFormatHint').textContent = S.descriptionIsHtml ? '当前为 HTML 模式：粘贴的 HTML 会原样写入。' : '当前为纯文本：只保留换行。'; }
+
+    // ===== 批量编辑已发布产品 =====
+    function getRecentChecked() {
+      return Array.from(document.querySelectorAll('.recent-check:checked')).map(cb => ({ id: cb.dataset.id, sku: cb.dataset.sku || '' }));
+    }
+    function updateBulkSelCount() {
+      const checked = document.querySelectorAll('.recent-check:checked').length;
+      const bc = $('bulkSelCount'); if (bc) bc.textContent = checked;
+      const btn = $('bulkEditBtn'); if (btn) btn.style.display = checked > 0 ? 'inline-block' : 'none';
+      const head = $('selectAllRecentHead'); const top = $('selectAllRecent');
+      const total = S.recentProducts.length;
+      if (head) { if (total > 0 && checked === total) head.checked = true; else if (checked !== total) head.checked = false; }
+      if (top) top.checked = head ? head.checked : false;
+    }
+    function bindRecentChecks() {
+      document.querySelectorAll('.recent-check').forEach(cb => {
+        cb.addEventListener('change', updateBulkSelCount);
+      });
+    }
+    window.openBulkEdit = function() {
+      const sel = getRecentChecked();
+      if (sel.length === 0) { toast('请先勾选要编辑的产品'); return; }
+      $('bulkCount').textContent = sel.length;
+      $('bulkEditPanel').style.display = 'block';
+      $('bulkImgOn').checked = true; $('bulkImgOpts').style.display = 'block';
+      $('bulkTypeOn').checked = false; $('bulkType').style.display = 'none';
+      $('bulkTagsOn').checked = false; $('bulkTagsOpts').style.display = 'none';
+      $('bulkStatusOn').checked = false; $('bulkStatus').style.display = 'none';
+      $('bulkUnifiedWrap').style.display = 'none';
+      $('bulkEditPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    window.closeBulkEdit = function() { $('bulkEditPanel').style.display = 'none'; };
+    function toggleBulkImgMode() {
+      const mode = document.querySelector('input[name="bulkImgMode"]:checked');
+      $('bulkUnifiedWrap').style.display = (mode && mode.value === 'unified') ? 'block' : 'none';
+    }
+    async function uploadBulkUnifiedImage() {
+      const file = $('bulkUnifiedFile').files ? $('bulkUnifiedFile').files[0] : null;
+      if (!file) return null;
+      toast('上传统一图片中...');
+      try { const r = await uploadImageFile(file); return { id: r.id, url: r.url, alt: file.name }; } catch (e) { toast('上传失败：' + e.message); return null; }
+    }
+    async function replaceProductImages(productId, searchKey, unified) {
+      try {
+        const mediaRes = await gqlWithRetry(PRODUCT_MEDIA_QUERY, { id: productId });
+        if (mediaRes.errors && mediaRes.errors.length) return '读取媒体失败：' + formatErrors(mediaRes.errors);
+        const mediaIds = (mediaRes.data && mediaRes.data.product && mediaRes.data.product.media ? mediaRes.data.product.media.edges : []).map(e => e.node ? e.node.id : null).filter(Boolean);
+        if (mediaIds.length > 0) {
+          const delRes = await gqlWithRetry(MEDIA_DELETE, { productId: productId, mediaIds: mediaIds });
+          if (delRes.errors && delRes.errors.length) return '删除旧图失败：' + formatErrors(delRes.errors);
+        }
+        let imgs = [];
+        if (unified) { imgs = [unified]; }
+        else { const r = await collectImagesForModel(searchKey || productId); imgs = r.images || []; }
+        if (imgs.length === 0) return '未找到替换图片';
+        const media = imgs.slice(0, TARGET_IMAGE_COUNT).map(img => ({ originalSource: img.url, mediaContentType: 'IMAGE', alt: searchKey || 'product' }));
+        const addRes = await gqlWithRetry(MEDIA_CREATE, { productId: productId, media: media });
+        if (addRes.errors && addRes.errors.length) return '添加新图失败：' + formatErrors(addRes.errors);
+        const ue = (addRes.data && addRes.data.productCreateMedia ? addRes.data.productCreateMedia.userErrors : []) || [];
+        if (ue.length > 0) return '添加新图失败：' + formatUserErrors(ue);
+        return '';
+      } catch (e) { return '换图异常：' + (e.message || '未知'); }
+    }
+    async function runBulkEdit() {
+      if (S.bulkRunning) return;
+      const sel = getRecentChecked();
+      if (sel.length === 0) { toast('没有选中的产品'); return; }
+      const doImg = $('bulkImgOn').checked;
+      const imgMode = (document.querySelector('input[name="bulkImgMode"]:checked') || {}).value || 'search';
+      const doType = $('bulkTypeOn').checked;
+      const typeVal = $('bulkType').value.trim();
+      const doTags = $('bulkTagsOn').checked;
+      const tagsVal = $('bulkTags').value.trim();
+      const tagsAppend = $('bulkTagsAppend').checked;
+      const doStatus = $('bulkStatusOn').checked;
+      const statusVal = $('bulkStatus').value;
+      if (!doImg && !doType && !doTags && !doStatus) { toast('请至少勾选一个要修改的字段'); return; }
+      if (doType && !typeVal) { toast('请填写产品类型'); return; }
+      if (doTags && !tagsVal) { toast('请填写 Tags'); return; }
+      let unified = null;
+      if (doImg && imgMode === 'unified') { unified = await uploadBulkUnifiedImage(); if (!unified) return; }
+      S.bulkRunning = true; $('bulkRunBtn').disabled = true;
+      $('bulkProgress').style.display = 'flex'; $('bulkProgressBar').style.display = 'block';
+      let ok = 0, fail = 0;
+      for (let i = 0; i < sel.length; i++) {
+        const p = sel[i];
+        $('bulkProgressText').textContent = '处理 ' + (i + 1) + '/' + sel.length + '…';
+        $('bulkProgressFill').style.width = Math.round((i / sel.length) * 100) + '%';
+        try {
+          if (doImg) { const msg = await replaceProductImages(p.id, p.sku, imgMode === 'unified' ? unified : null); if (msg) { fail++; continue; } }
+          const productInput = {};
+          if (doType) productInput.productType = typeVal;
+          if (doStatus) productInput.status = statusVal;
+          if (doTags) {
+            let finalTags = parseTags(tagsVal);
+            if (tagsAppend) {
+              try { const tr = await gqlWithRetry(PRODUCT_TAGS_QUERY, { id: p.id }); const oldTags = (tr.data && tr.data.product && tr.data.product.tags) || []; for (const t of finalTags) { if (!oldTags.some(o => o.toLowerCase() === t.toLowerCase())) oldTags.push(t); } finalTags = oldTags; } catch (e2) {}
+            }
+            productInput.tags = finalTags;
+          }
+          if (Object.keys(productInput).length > 0) {
+            const r = await gqlWithRetry(PRODUCT_UPDATE, { id: p.id, product: productInput });
+            if (r.errors && r.errors.length) { fail++; continue; }
+            const ue = (r.data && r.data.productUpdate ? r.data.productUpdate.userErrors : []) || [];
+            if (ue.length > 0) { fail++; continue; }
+          }
+          ok++;
+        } catch (e3) { fail++; }
+      }
+      $('bulkProgressFill').style.width = '100%';
+      $('bulkProgress').style.display = 'none'; $('bulkProgressBar').style.display = 'none';
+      S.bulkRunning = false; $('bulkRunBtn').disabled = false;
+      toast('批量编辑完成：成功 ' + ok + '，失败 ' + fail);
+      loadRecentProducts(null, 'forward');
+    }
 
     // ===== 定时队列 =====
     async function loadQueue() {
@@ -1228,11 +1440,26 @@
       $('parseBatchBtn').addEventListener('click', parseBatch);
       $('clearBatchBtn').addEventListener('click', clearBatch);
       $('btnBatchRun').addEventListener('click', runBatch);
+      $('batchScheduleOn').addEventListener('change', function() {
+        $('batchScheduleOpts').style.display = this.checked ? 'block' : 'none';
+        $('btnBatchRun').textContent = this.checked ? '✅ 加入定时队列' : '✅ 批量创建并上架';
+      });
+      $('batchScheduleWrap').style.display = 'block';
 
       $('refreshRecentBtn').addEventListener('click', () => { $('recentSearchInput').value = ''; S.recentSearchQuery = ''; loadRecentProducts(null, 'forward'); });
-      $('prevPageBtn').addEventListener('click', () => { if (S.recentPageInfo?.hasPreviousPage) loadRecentProducts(S.recentPageInfo.startCursor, 'backward'); });
-      $('nextPageBtn').addEventListener('click', () => { if (S.recentPageInfo?.hasNextPage) loadRecentProducts(S.recentPageInfo.endCursor, 'forward'); });
+      $('prevPageBtn').addEventListener('click', () => { if (S.recentPageInfo && S.recentPageInfo.hasPreviousPage) loadRecentProducts(S.recentPageInfo.startCursor, 'backward'); });
+      $('nextPageBtn').addEventListener('click', () => { if (S.recentPageInfo && S.recentPageInfo.hasNextPage) loadRecentProducts(S.recentPageInfo.endCursor, 'forward'); });
       $('refreshQueueBtn').addEventListener('click', loadQueue);
+      $('bulkEditBtn').addEventListener('click', openBulkEdit);
+      $('bulkCloseBtn').addEventListener('click', closeBulkEdit);
+      $('bulkRunBtn').addEventListener('click', runBulkEdit);
+      $('bulkImgOn').addEventListener('change', function() { $('bulkImgOpts').style.display = this.checked ? 'block' : 'none'; });
+      Array.from(document.getElementsByName('bulkImgMode')).forEach(r => r.addEventListener('change', toggleBulkImgMode));
+      $('bulkTypeOn').addEventListener('change', function() { $('bulkType').style.display = this.checked ? 'block' : 'none'; });
+      $('bulkTagsOn').addEventListener('change', function() { $('bulkTagsOpts').style.display = this.checked ? 'block' : 'none'; });
+      $('bulkStatusOn').addEventListener('change', function() { $('bulkStatus').style.display = this.checked ? 'block' : 'none'; });
+      $('selectAllRecent').addEventListener('change', function() { document.querySelectorAll('.recent-check').forEach(cb => { cb.checked = this.checked; }); updateBulkSelCount(); });
+      $('selectAllRecentHead').addEventListener('change', function() { document.querySelectorAll('.recent-check').forEach(cb => { cb.checked = this.checked; }); updateBulkSelCount(); });
       $('recentSearchInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') { const q = e.target.value.trim(); if (q) searchRecentProducts(q); } });
 
       $('vendor').addEventListener('focus', () => showVendorList('vendor', 'vendorList'));
