@@ -14,7 +14,7 @@
     const CHECK_SKU_QUERY = `query CheckSku($query: String!) { productVariants(first: 3, query: $query) { edges { node { id sku product { id title status } } } } }`;
     const PRODUCT_CREATE = `mutation CreateProduct($product: ProductCreateInput!, $media: [CreateMediaInput!]) { productCreate(product: $product, media: $media) { product { id handle title seo { title description } variants(first: 1) { edges { node { id } } } } userErrors { field message } } }`;
     const PRODUCT_MEDIA_QUERY = `query ProductMedia($id: ID!) { product(id: $id) { id media(first: 50) { edges { node { id ... on MediaImage { preview { image { url } } } } } } } }`;
-    const PRODUCT_UPDATE = `mutation UpdateProduct($id: ID!, $product: ProductInput!) { productUpdate(productId: $id, product: $product) { product { id title } userErrors { field message } } }`;
+    const PRODUCT_UPDATE = `mutation UpdateProduct($productId: ID!, $product: ProductUpdateInput!) { productUpdate(productId: $productId, product: $product) { product { id title } userErrors { field message } } }`;
     const MEDIA_DELETE = `mutation DeleteMedia($productId: ID!, $mediaIds: [ID!]!) { productDeleteMedia(productId: $productId, mediaIds: $mediaIds) { deletedMediaIds userErrors { field message } } }`;
     const MEDIA_CREATE = `mutation CreateMedia($productId: ID!, $media: [CreateMediaInput!]!) { productCreateMedia(productId: $productId, media: $media) { media { id } userErrors { field message } } }`;
     const PRODUCT_TAGS_QUERY = `query ProductTags($id: ID!) { product(id: $id) { tags } }`;
@@ -834,7 +834,7 @@
               }
               productInput.tags = finalTags;
             }
-            const r = await gqlWithRetry(PRODUCT_UPDATE, { id: p.id, product: productInput });
+            const r = await gqlWithRetry(PRODUCT_UPDATE, { productId: p.id, product: productInput });
             if (r.errors && r.errors.length) { const e = 'productUpdate系统错误: ' + JSON.stringify(r.errors); console.error(e); errMsgs.push(pLabel + ': ' + e); fail++; continue; }
             const ue = (r.data && r.data.productUpdate ? r.data.productUpdate.userErrors : []) || [];
             if (ue.length > 0) { const e = ue.map(u => u.message||JSON.stringify(u)).join('; '); errMsgs.push(pLabel + ': ' + e); fail++; continue; }
@@ -862,7 +862,7 @@
             productInput.tags = finalTags;
           }
           if (Object.keys(productInput).length > 0) {
-            const r = await gqlWithRetry(PRODUCT_UPDATE, { id: p.id, product: productInput });
+            const r = await gqlWithRetry(PRODUCT_UPDATE, { productId: p.id, product: productInput });
             if (r.errors && r.errors.length) { fail++; continue; }
             const ue = (r.data && r.data.productUpdate ? r.data.productUpdate.userErrors : []) || [];
             if (ue.length > 0) { fail++; continue; }
