@@ -814,7 +814,9 @@
             const tagsValue = item.tags || insights.tags;
             const seoTitleValue = buildSeoTitleFromTitle(titleValue, insights);
             const metaDescValue = buildMetaDescription(cleanDesc || modelLine, insights);
-            const descHtml = toHtml((cleanDesc || '').replace(/<br\s*\/?\s*>/gi, '\n'), false);
+            const rawDesc = cleanDesc || '';
+            const isHtmlContent = /<[a-z][\s>][^<]*>/i.test(rawDesc);
+            const descHtml = isHtmlContent ? rawDesc : toHtml(rawDesc.replace(/<br\s*\/?\s*>/gi, '\n'), false);
             const handleValue = buildHandleFromTitle(titleValue, modelLine);
             const finalTitle = titleValue || p.title || '';
             const productInput = {
