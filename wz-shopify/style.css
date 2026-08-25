@@ -25,7 +25,7 @@
       padding: 20px 16px 40px;
     }
     body { transform-origin: top center; transform: scale(0.92); }
-    .wrap { max-width: 708px; margin: 0 auto; }
+    .wrap { width: 755px; max-width: 100%; margin: 0 auto; }
 
     .title {
       font-size: 22px; font-weight: 700; margin: 0; padding: 12px 0 14px;
@@ -101,15 +101,8 @@
     .shop-name { font-weight: 700; font-size: 16px; color: var(--ink); }
     .shop-store { font-size: 13px; color: var(--soft); margin: 4px 0 10px; word-break: break-all; }
     .recent-table { width: 100%; table-layout: fixed; }
-    .recent-table td, .recent-table th { max-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .recent-table td, .recent-table th { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .recent-table td:first-child, .recent-table th:first-child { width: 32px; }
-    .recent-table th:nth-child(2), .recent-table td:nth-child(2) { width: 35%; }
-    .recent-table th:nth-child(3), .recent-table td:nth-child(3) { width: 70px; }
-    .recent-table th:nth-child(4), .recent-table td:nth-child(4) { width: 70px; }
-    .recent-table th:nth-child(5), .recent-table td:nth-child(5) { width: 90px; }
-    .recent-table th:nth-child(6), .recent-table td:nth-child(6) { width: 60px; }
-    .recent-table th:nth-child(7), .recent-table td:nth-child(7) { width: 100px; }
-    .recent-table th:nth-child(8), .recent-table td:nth-child(8) { width: 120px; }
     .recent-table th:first-child, .recent-table td:first-child { width: 32px; }
     .recent-table td { word-break: break-word; vertical-align: top; }
     .queue-card { overflow: hidden; }
