@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🎐 丸子の工作宝宝</title>
+<link rel="stylesheet" href="style.css?v=20260825">
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== 固定标题栏（一键全折叠） ===== -->
+  <div class="title" id="mainTitle" onclick="toggleAllSections()">
+    🎐 丸子の工作宝宝
+    <span id="titleHint" style="font-size:12px;font-weight:400;color:var(--soft);float:right;">全部展开</span>
+  </div>
+
+  <!-- ===== Tab 切换 ===== -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-publish" onclick="switchTab('publish')">📤 发品</button>
+    <button class="tab-btn" id="tab-tools" onclick="switchTab('tools')">🧰 工具箱</button>
+  </div>
+
+  <!-- ================================================ -->
+  <!-- ========== 发品页面 ========== -->
+  <!-- ================================================ -->
+  <div id="publishPage" class="page active">
+
+    <!-- 草稿恢复横幅 -->
+    <div id="draftBanner" class="draft-banner" style="display:none;">
+      <span>📝 上次有未完成的发品草稿</span>
+      <div class="row"><button class="btn btn-ghost btn-mini" id="restoreDraftBtn">恢复</button><button class="btn btn-ghost btn-mini" id="discardDraftBtn">丢弃</button></div>
+    </div>
+
+    <!-- ① 店铺与令牌 -->
+    <div class="section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="toggle-icon">▼</span>
+        <span class="section-icon">🏪</span>
+        <span class="section-title">① 店铺与令牌</span>
+      </div>
+      <div class="section-content">
+        <div class="card" style="margin-bottom:0;box-shadow:none;border-color:#e6dcff;">
+          <div class="h2">已添加店铺</div>
+          <div id="shopList"></div>
+          <div id="shopEmpty" class="hint" style="display:none;">还没有店铺，点下面「添加店铺」吧～</div>
+          <button class="btn btn-ghost btn-block" id="toggleAddShop">➕ 添加店铺</button>
+          <div id="addShopForm" style="display:none; margin-top:12px;">
+            <div class="label">店铺域名</div>
+            <input class="input" id="newStore" />
+            <div class="label">店铺备注名（可不填）</div>
+            <input class="input" id="newName" />
+            <div class="label">Client ID</div>
+            <input class="input" id="newClientId" />
+            <div class="label">Client Secret（shpss_ 开头）</div>
+            <input class="input" id="newSecret" />
+            <button class="btn btn-primary btn-block" id="addShopBtn">添加店铺</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② 快速发品 -->
+    <div class="section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="toggle-icon">▼</span>
+        <span class="section-icon">⚡</span>
+        <span class="section-title">② 快速发品</span>
+      </div>
+      <div class="section-content">
+        <div class="card" style="margin-bottom:0;box-shadow:none;border-color:#e6dcff;">
+          <div class="label">目标店铺</div>
+          <select class="input" id="shopSelect"></select>
+          <div id="banners"></div>
+
+          <!-- 高级设置 -->
+          <div class="topbar" style="margin-top:14px;">
+            <span class="h2" style="margin:0;">⚙️ 高级设置</span>
+            <button class="btn btn-ghost btn-mini" id="toggleSettings">展开</button>
+          </div>
+          <div id="settingsPanel" class="fold-panel" style="display:none;">
+            <div class="label">发布模式</div>
+            <select class="input" id="mode">
+              <option value="single">单个发布</option>
+              <option value="batch">批量发布</option>
+            </select>
+            <div class="label">标题格式</div>
+            <select class="input" id="titleFormat">
+              <option value="vendor_model_name">厂商 型号 品名</option>
+              <option value="model_vendor_system">型号 | 厂商 | 系统名 品名</option>
+              <option value="vendor_model_series">厂商 型号 系列名 品名</option>
+            </select>
+            <div class="hint">品名与系列名会自动转为 Title Case</div>
+            <div class="label">描述格式</div>
+            <select class="input" id="descFormat">
+              <option value="html" selected>HTML 代码（原样保留）</option>
+              <option value="plain">纯文本（自动分段）</option>
+            </select>
+            <div class="label">描述模板</div>
+            <div class="row">
+              <select class="input" id="descTemplate" style="flex:2;"><option value="">— 选择模板 —</option></select>
+              <button class="btn btn-ghost btn-mini" id="saveTemplateBtn" style="flex:0 0 auto;">💾 存</button>
+              <button class="btn btn-ghost btn-mini" id="deleteTemplateBtn" style="flex:0 0 auto;">🗑</button>
+            </div>
+            <div class="label">Shopify 产品类别 (Category)</div>
+            <div class="row">
+              <input class="input" id="categorySearch" style="flex:2;" />
+              <button class="btn btn-ghost btn-mini" id="btnCatSearch" style="flex:0 0 auto;">搜索</button>
+            </div>
+            <div id="categoryArea" style="margin-top:8px;"></div>
+            <div class="label">上架销售渠道 <span id="pubCount"></span></div>
+            <div id="pubArea" style="margin-bottom:8px;"><span class="hint">加载中…</span></div>
+            <div class="row">
+              <button class="btn btn-ghost btn-mini" id="pubSelectAll">全选</button>
+              <button class="btn btn-ghost btn-mini" id="pubSelectNone">全不选</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 批量发品 -->
+        <div id="batchSection" class="card" style="display:none;">
+          <div class="h2">批量发品</div>
+          <div class="label">厂商（本批共用）</div>
+          <div class="vendor-row"><input class="input" id="batchVendor" autocomplete="off" /><div class="vendor-datalist" id="batchVendorList"></div></div>
+          <div class="label">批量内容</div>
+          <textarea class="input" id="batchInput" rows="10"></textarea>
+          <div class="hint">每段第一行填型号，下面几行填描述；产品之间用单独一行 --- 分隔；单次最多 50 个</div>
+          <div class="row" style="margin-top:12px;">
+            <button class="btn btn-primary btn-mini" id="parseBatchBtn">🔎 解析内容</button>
+            <button class="btn btn-danger btn-mini" id="clearBatchBtn">清空</button>
+          </div>
+          <div id="batchNotice" class="hint"></div>
+          <div id="batchProgress" class="progress" style="display:none; margin-top:8px;"><div class="spin"></div><span id="batchProgressText"></span></div>
+          <div id="batchProgressBar" class="progress-bar" style="display:none;"><div class="fill" id="batchProgressFill" style="width:0%;"></div></div>
+          <div id="batchTableWrap" style="display:none; margin-top:14px;">
+            <div id="batchListBody"></div>
+            <button class="btn btn-primary btn-block" id="btnBatchRun" style="margin-top:14px;">✅ 批量创建并上架</button>
+          </div>
+        </div>
+
+        <!-- 单个发品 - 第一步 -->
+        <div id="singleInputSection" class="card" style="margin-bottom:0;box-shadow:none;border-color:#e6dcff;">
+          <div class="h2">第一步 · 输入型号与厂商</div>
+          <div class="row">
+            <div>
+              <div class="label">型号</div>
+              <input class="input" id="model" />
+            </div>
+            <div>
+              <div class="label">厂商</div>
+              <div class="vendor-row"><input class="input" id="vendor" autocomplete="off" /><div class="vendor-datalist" id="vendorList"></div></div>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-block" id="startFillBtn" style="margin-top:12px;">📋 开始填写（自动搜图）</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 单个发品 - 第二步 -->
+    <div class="section" id="singleContentSection" style="display:none;">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="toggle-icon">▼</span>
+        <span class="section-icon">📝</span>
+        <span class="section-title">第二步 · 描述与 SEO</span>
+      </div>
+      <div class="section-content">
+        <div class="card" style="margin-bottom:0;box-shadow:none;border-color:#e6dcff;">
+          <div class="label">产品标题</div>
+          <input class="input" id="title" />
+          <div class="hint">优先使用描述中的 TITLE，否则按标题格式生成，可自由编辑</div>
+          <div class="label">产品描述</div>
+          <textarea class="input" id="description" rows="10"></textarea>
+          <div class="hint">描述开头可写 TITLE: / TYPE: / TAGS: 三行，解析后优先使用且不会写入产品描述。<span id="descFormatHint"></span></div>
+          <button class="btn btn-ghost btn-block" id="generateBtn" style="margin-top:10px;">✨ 根据描述生成标题 / 类型 / 标记 / SEO</button>
+          <div id="directivePreview" class="directive" style="display:none;"></div>
+          <div class="label">SEO 标题 <span id="seoLen"></span></div>
+          <input class="input" id="seoTitle" />
+          <div class="label">Meta Description <span id="metaLen"></span></div>
+          <textarea class="input" id="metaDescription" rows="2"></textarea>
+          <div class="label">Handle（网址后缀）</div>
+          <input class="input" id="handle" />
+          <div class="hint">留空则由 Shopify 根据标题自动生成</div>
+          <div class="row">
+            <div>
+              <div class="label">SKU</div>
+              <input class="input" id="sku" />
+            </div>
+            <div>
+              <div class="label">产品类型 (Product Type)</div>
+              <input class="input" id="productType" />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <div class="label">条码 (Barcode)</div>
+              <input class="input" id="barcode" />
+            </div>
+            <div>
+              <div class="label">库存数量（留空随机）</div>
+              <input class="input" id="inventoryQuantity" type="number" />
+            </div>
+          </div>
+          <div class="label">标记 Tags（逗号分隔）</div>
+          <input class="input" id="tags" />
+        </div>
+      </div>
+    </div>
+
+    <!-- 单个发品 - 第三步 -->
+    <div class="section" id="singlePreviewSection" style="display:none;">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="toggle-icon">▼</span>
+        <span class="section-icon">🖼️</span>
+        <span class="section-title">第三步 · 自动填充预览</span>
+      </div>
+      <div class="section-content">
+        <div class="card" style="margin-bottom:0;box-shadow:none;border-color:#e6dcff;">
+          <div class="label" id="imgCountLabel">产品图片</div>
+          <div id="imageStatus"></div>
+          <div id="selectedImagesWrap" class="sel-imgs"></div>
+          <input type="file" id="imageUploadInput" accept="image/*" style="display:none;">
+          <button class="btn btn-ghost btn-mini" id="btnUploadImage" style="margin-top:6px;">📤 上传本地图片</button>
+          <div class="row" style="margin-top:10px;">
+            <input class="input" id="imageSearchTerm" style="flex:2;" />
+            <button class="btn btn-ghost btn-mini" id="btnImgSearch" style="flex:0 0 auto;">搜索</button>
+          </div>
+          <div id="candidatesWrap" class="img-grid"></div>
+          <div id="pricingBox" class="pricing"></div>
+          <div class="row" style="margin-top:10px;">
+            <button class="btn btn-ghost btn-mini" id="scheduleBtn">⏰ 定时发布</button>
+          </div>
+          <div id="scheduleWrap" style="display:none; margin-top:10px;">
+            <div class="label">发布时间</div>
+            <div class="date-picker">
+              <input class="input" id="scheduleTime" type="datetime-local" />
+            </div>
+            <div class="quick-dates">
+              <button class="btn btn-ghost btn-mini" data-hours="1">+1小时</button>
+              <button class="btn btn-ghost btn-mini" data-hours="2">+2小时</button>
+              <button class="btn btn-ghost btn-mini" data-hours="6">+6小时</button>
+              <button class="btn btn-ghost btn-mini" data-hours="24">明天</button>
+            </div>
+            <button class="btn btn-primary btn-mini btn-block" id="confirmScheduleBtn" style="margin-top:8px;">✅ 确认定时发布</button>
+          </div>
+          <button class="btn btn-primary btn-block" id="createBtn" style="margin-top:14px;">✅ 创建并上架</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ 最近发品 + 定时队列 -->
+    <div class="section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="toggle-icon">▼</span>
+        <span class="section-icon">📦</span>
+        <span class="section-title">③ 数据与队列</span>
+      </div>
+      <div class="section-content">
+        <div class="card" style="margin-bottom:0;box-shadow:none;border-color:#e6dcff;">
+          <div class="topbar">
+            <span class="h2" style="margin:0;">最近发品</span>
+            <div class="row">
+              <button class="btn btn-ghost btn-mini" id="refreshRecentBtn">刷新</button>
+              <button class="btn btn-ghost btn-mini" id="prevPageBtn">上一页</button>
+              <button class="btn btn-ghost btn-mini" id="nextPageBtn">下一页</button>
+            </div>
+          </div>
+          <div class="recent-search">
+            <input class="input" id="recentSearchInput" placeholder="搜索型号或 SKU...">
+          </div>
+          <table style="margin-top:12px;">
+            <thead><tr><th>商品</th><th>状态</th><th>售价</th><th>SKU</th><th>操作</th></tr></thead>
+            <tbody id="recentBody"><tr><td colspan="5" class="hint">加载中…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="card" style="margin-top:16px;margin-bottom:0;box-shadow:none;border-color:#e6dcff;">
+          <div class="h2">定时发品队列</div>
+          <div id="queueList"></div>
+          <div id="queueEmpty" class="hint" style="display:none;">暂无定时任务</div>
+          <button class="btn btn-ghost btn-block" id="refreshQueueBtn">🔄 刷新队列</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /publishPage -->
+
+  <!-- ================================================ -->
+  <!-- ========== 工具箱页面 ========== -->
+  <!-- ================================================ -->
+  <div id="toolsPage" class="page">
+
+    <!-- 返回按钮 -->
+    <div style="margin-bottom:12px;">
+      <button class="btn btn-ghost btn-mini" onclick="showPublishPage()">← 返回发品</button>
+    </div>
+
+    <!-- 工具卡片网格 -->
+    <div class="tools-grid">
+      <div class="tool-card search" onclick="openSearchTool()">
+        <span class="icon">🔍</span>
+        <div class="name">参数查询</div>
+        <div class="sub">搜型号/尺寸/重量</div>
+      </div>
+      <div class="tool-card exchange" onclick="openExchangeTool()">
+        <span class="icon">💱</span>
+        <div class="name">汇率换算</div>
+        <div class="sub">15+货币实时汇率</div>
+      </div>
+      <div class="tool-card timezone" onclick="openTimezoneTool()">
+        <span class="icon">🕐</span>
+        <div class="name">时差查询</div>
+        <div class="sub">全球城市时间</div>
+      </div>
+      <div class="tool-card express" onclick="openExpressTool()">
+        <span class="icon">🚚</span>
+        <div class="name">快递查询</div>
+        <div class="sub">跳转快递100</div>
+      </div>
+      <div class="tool-card pack" onclick="openPackTool()">
+        <span class="icon">📐</span>
+        <div class="name">AI 装箱</div>
+        <div class="sub">智能包装预估</div>
+      </div>
+      <div class="tool-card link" onclick="openLinkTool()">
+        <span class="icon">🔎</span>
+        <div class="name">链接抓取</div>
+        <div class="sub">店铺产品搜索</div>
+      </div>
+      <div class="tool-card file" onclick="openFileTool()" style="grid-column: span 2;">
+        <span class="icon">📁</span>
+        <div class="name">文件工具</div>
+        <div class="sub">图片/PDF转换 · 跨设备传文件</div>
+      </div>
+    </div>
+
+    <!-- ===== 参数查询面板 ===== -->
+    <div id="panel-search" class="tool-panel" style="display:none;">
+      <div class="search-box">
+        <div class="search-row">
+          <input class="search-input" id="sq" placeholder="输入型号（空格或逗号分隔多个）…" onkeydown="if(event.key==='Enter')doSearch()">
+          <button class="search-btn" onclick="doSearch()">🔍</button>
+        </div>
+        <div class="hint" style="margin-top:8px;">支持空格或逗号分隔，一次最多 20 个型号</div>
+      </div>
+      <div id="sres" style="display:none;margin-top:14px;"></div>
+    </div>
+
+    <!-- ===== 汇率换算面板 ===== -->
+    <div id="panel-exchange" class="tool-panel" style="display:none;">
+      <div style="margin-bottom:12px;">
+        <div class="label">金额</div>
+        <input class="exchange-input" id="exAmt" type="number" placeholder="0.00" oninput="doExchange()">
+      </div>
+      <div class="exchange-row" style="margin-bottom:12px;">
+        <select class="exchange-select" id="exFrom" onchange="doExchange()"></select>
+        <button class="exchange-swap" onclick="swapExchange()">⇄</button>
+        <select class="exchange-select" id="exTo" onchange="doExchange()"></select>
+        <div class="exchange-result" id="exResult">0.00</div>
+      </div>
+      <div class="exchange-rate" id="exRate" style="margin-top:6px;"></div>
+    </div>
+
+    <!-- ===== 时差查询面板 ===== -->
+    <div id="panel-timezone" class="tool-panel" style="display:none;">
+      <div class="tz-cards" id="tzCards" style="margin-bottom:12px;"></div>
+      <div class="tz-row">
+        <div class="tz-input-wrap">
+          <input class="tz-input" id="tzInput" placeholder="搜索城市…" oninput="searchTimezone(this.value)" onblur="blurTzSuggest()">
+          <div class="tz-suggest" id="tzSuggest"></div>
+        </div>
+      </div>
+      <div id="tzResult" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- ===== 快递查询面板 ===== -->
+    <div id="panel-express" class="tool-panel" style="display:none;">
+      <div class="express-form">
+        <select class="express-select" id="exCo">
+          <option value="auto">自动识别</option>
+        </select>
+        <input class="express-input" id="exNo" placeholder="运单号…" style="flex:1;">
+        <button class="express-btn" onclick="doExpress()">查询</button>
+      </div>
+      <div class="express-result" id="exResult" style="margin-top:10px;">
+        <div class="express-info-card" style="text-align:center;font-size:13px;color:var(--soft);">
+          输入运单号即可跳转到对应快递官网追踪<br>
+          <span style="font-size:11px;">支持顺丰/申通/圆通/中通/韵达/EMS等</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 包装预估面板 ===== -->
+    <div id="panel-pack" class="tool-panel" style="display:none;">
+      <div class="label">产品尺寸（cm，可填 30×20×15）</div>
+      <input class="input" id="packSize" placeholder="例如 30×20×15" style="margin-bottom:10px;">
+      <div class="label">产品重量（kg）</div>
+      <input class="input" id="packWeight" placeholder="例如 0.5" style="margin-bottom:10px;">
+      <button class="btn btn-primary btn-block" onclick="doPack()">🤖 AI 计算推荐包装</button>
+      <div id="packResult" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- ===== 链接抓取面板 ===== -->
+    <div id="panel-link" class="tool-panel" style="display:none;">
+      <div class="label">店铺链接</div>
+      <input class="input lf-url" id="lfUrl" placeholder="https://xxx.myshopify.com">
+      <div class="label">要查找的型号（每行一个）</div>
+      <textarea class="input lf-textarea" id="lfModels" rows="5" placeholder="E3J\nE5J\nTR205"></textarea>
+      <div class="lf-actions">
+        <button class="btn btn-primary btn-mini" onclick="doLinkFetch()">🔎 查找</button>
+        <button class="btn btn-ghost btn-mini" onclick="clearLinkFetch()">清空缓存</button>
+        <button class="btn btn-ghost btn-mini" onclick="copyLfTable()">复制表格</button>
+      </div>
+      <div class="lf-info" id="lfInfo"></div>
+      <div id="lfResult" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- ===== 文件工具面板 ===== -->
+    <div id="panel-file" class="tool-panel" style="display:none;">
+      <div class="ft-tabs">
+        <button class="ft-tab active" data-tab="img2pdf" onclick="renderFtTab('img2pdf')">🖼️→PDF</button>
+        <button class="ft-tab" data-tab="pdf2img" onclick="renderFtTab('pdf2img')">PDF→图</button>
+        <button class="ft-tab" data-tab="merge" onclick="renderFtTab('merge')">合并PDF</button>
+        <button class="ft-tab" data-tab="filexf" onclick="renderFtTab('filexf')">文字PDF</button>
+        <button class="ft-tab" data-tab="passcode" onclick="renderFtTab('passcode')">📦传文件</button>
+      </div>
+
+      <!-- 图片转 PDF -->
+      <div id="ftp-img2pdf">
+        <div class="ft-options">
+          <div>
+            <div class="label" style="margin-top:0;">纸张方向</div>
+            <select class="input" id="imgOrient" style="margin-bottom:8px;">
+              <option value="portrait">纵向 A4</option>
+              <option value="landscape">横向 A4</option>
+            </select>
+          </div>
+          <div>
+            <div class="label" style="margin-top:0;">图片质量</div>
+            <select class="input" id="imgQuality">
+              <option value="95">高质量 95%</option>
+              <option value="85" selected>均衡 85%</option>
+              <option value="70">小体积 70%</option>
+            </select>
+          </div>
+        </div>
+        <div class="ft-dropzone" onclick="ftSelectFiles('img')">
+          <div class="ft-dropzone-icon">📁</div>
+          <div class="ft-dropzone-text">点击选择图片（可多选）</div>
+        </div>
+        <div id="ftImgPreview" class="ft-img-preview"></div>
+        <button class="btn btn-primary btn-block" onclick="convertImg2Pdf()" style="margin-top:12px;">🖨️ 生成 PDF</button>
+      </div>
+
+      <!-- PDF 转图片 -->
+      <div id="ftp-pdf2img" style="display:none;">
+        <div class="ft-dropzone" onclick="ftSelectFiles('pdf')">
+          <div class="ft-dropzone-icon">📄</div>
+          <div class="ft-dropzone-text">点击选择 PDF（最多5页/文件）</div>
+        </div>
+        <div id="ftPdfList" class="ft-file-list"></div>
+        <button class="btn btn-primary btn-block" onclick="convertPdf2Img()" style="margin-top:12px;">🖼️ 导出为图片</button>
+      </div>
+
+      <!-- PDF 合并 -->
+      <div id="ftp-pdfmerge" style="display:none;">
+        <div class="ft-dropzone" onclick="ftSelectFiles('pdf')">
+          <div class="ft-dropzone-icon">📚</div>
+          <div class="ft-dropzone-text">点击选择多个 PDF（用于合并）</div>
+        </div>
+        <div id="ftPdfListMerge" class="ft-file-list"></div>
+        <button class="btn btn-primary btn-block" onclick="mergePdf()" style="margin-top:12px;">📖 合并并下载</button>
+      </div>
+
+      <!-- 文字转 PDF -->
+      <div id="ftp-filexf" style="display:none;">
+        <textarea class="input" id="txtContent" rows="10" placeholder="在这里输入文字内容…" style="min-height:160px;resize:vertical;"></textarea>
+        <button class="btn btn-primary btn-block" onclick="txtToPdf()" style="margin-top:10px;">🖨️ 文字生成 PDF</button>
+        <div class="ft-tip">提示：也可以直接在浏览器中按 Ctrl/Cmd+P 打印为 PDF</div>
+      </div>
+
+      <!-- 跨设备传文件 -->
+      <div id="ftp-passcode" style="display:none;">
+        <div class="ft-dropzone" onclick="ftSelectFiles('any')">
+          <div class="ft-dropzone-icon">📦</div>
+          <div class="ft-dropzone-text">选择要传输的文件（支持图片/PDF/任意格式）</div>
+        </div>
+        <div id="ftFileListPass" class="ft-file-list"></div>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn btn-primary btn-mini" onclick="generatePasscode()" style="flex:1;">🔑 生成取件码</button>
+          <button class="btn btn-ghost btn-mini" onclick="renderFtTab('passcode')" style="flex:1;">📥 取文件</button>
+        </div>
+        <div id="passcodeBox" style="display:none;margin-top:14px;">
+          <div class="ft-code-box">
+            <div class="ft-code-label">取件码（有效期 24 小时）</div>
+            <div class="ft-code-value" id="passcodeValue">—</div>
+            <div class="ft-tip" id="passcodeHint"></div>
+          </div>
+          <button class="btn btn-ghost btn-block" onclick="copyPasscode()" style="margin-top:8px;">📋 复制取件码</button>
+        </div>
+        <div style="margin-top:14px;padding:14px;background:#fff;border-radius:12px;border:2px solid var(--line);">
+          <div class="label" style="margin-top:0;">输入取件码下载文件</div>
+          <div class="row" style="margin-top:6px;">
+            <input class="input" id="fetchCodeInput" placeholder="6位取件码" style="flex:1;">
+            <button class="btn btn-ghost btn-mini" onclick="fetchByPasscode()" style="flex:0 0 auto;">下载</button>
+          </div>
+        </div>
+        <div class="ft-tip" style="margin-top:8px;">📱 分享取件码给好友，他们可在任何设备输入取件码下载文件（本地存储，无需上传）</div>
+      </div>
+    </div>
+
+  </div><!-- /toolsPage -->
+
+</div><!-- /wrap -->
+
+<!-- ===== 添加产品模态框 ===== -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal-box">
+    <div class="modal-title">
+      ➕ 添加产品
+      <button class="modal-close" onclick="closeAddModal()">✕</button>
+    </div>
+    <div id="addForm">
+      <div class="form-group">
+        <div class="form-label">型号 *</div>
+        <input class="form-input" id="addModel" placeholder="例如 E3J-002">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <div class="form-label">长×宽×高（cm）</div>
+          <input class="form-input" id="addSize" placeholder="30×20×10">
+        </div>
+        <div class="form-group">
+          <div class="form-label">重量（kg）</div>
+          <input class="form-input" id="addWeight" placeholder="0.5">
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">备注（选填）</div>
+        <textarea class="form-input" id="addDesc" rows="3" placeholder="可选"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeAddModal()">取消</button>
+        <button class="btn-save" onclick="submitAddProduct()">保存</button>
+      </div>
+    </div>
+    <div id="addSuccess" class="form-success" style="display:none;">
+      <div class="success-icon">✅</div>
+      <div class="success-text">添加成功！</div>
+      <div class="success-model" id="addSuccessModel"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- 云开发 SDK -->
+<script src="https://static.cloudbase.net/cloudbase-js-sdk/2.32.0/cloudbase.full.js"></script>
+<!-- 发品模块 -->
+<script src="publish.js?v=20260825"></script>
+<!-- 工具箱模块 -->
+<script src="tools.js?v=20260825"></script>
+
+<script>
+// ===== 主框架初始化 =====
+(function init() {
+  // 初始化发品模块
+  initPublish();
+
+  // 绑定发品事件
+  bindPublishEvents();
+
+  // 初始化汇率货币列表
+  const exFrom = document.getElementById('exFrom');
+  const exTo = document.getElementById('exTo');
+  if (exFrom && exTo) {
+    const html = EX_CURRENCIES.map(c => `<option value="${c}">${c} ${EX_LABELS[c]||''}</option>`).join('');
+    exFrom.innerHTML = html;
+    exTo.innerHTML = html;
+  }
+
+  // 初始化快递公司下拉
+  const exCo = document.getElementById('exCo');
+  if (exCo) {
+    exCo.innerHTML = '<option value="auto">自动识别</option>' +
+      expCompanyNames.map(n => `<option value="${n}">${n}</option>`).join('');
+  }
+
+  // iOS 键盘修复
+  tResize();
+})();
+
+// ===== Tab 切换 =====
+function switchTab(tab) {
+  const publishPage = document.getElementById('publishPage');
+  const toolsPage = document.getElementById('toolsPage');
+  const tabPublish = document.getElementById('tab-publish');
+  const tabTools = document.getElementById('tab-tools');
+
+  if (tab === 'publish') {
+    if (publishPage) publishPage.classList.add('active');
+    if (toolsPage) toolsPage.classList.remove('active');
+    if (tabPublish) tabPublish.classList.add('active');
+    if (tabTools) tabTools.classList.remove('active');
+  } else {
+    if (publishPage) publishPage.classList.remove('active');
+    if (toolsPage) toolsPage.classList.add('active');
+    if (tabPublish) tabPublish.classList.remove('active');
+    if (tabTools) tabTools.classList.add('active');
+  }
+  tResize();
+}
+
+// ===== 标题栏一键全折叠 =====
+let _allCollapsed = false;
+function toggleAllSections() {
+  _allCollapsed = !_allCollapsed;
+  document.querySelectorAll('#publishPage .section').forEach(sec => {
+    if (_allCollapsed) {
+      sec.classList.add('collapsed');
+    } else {
+      sec.classList.remove('collapsed');
+    }
+  });
+  const hint = document.getElementById('titleHint');
+  if (hint) hint.textContent = _allCollapsed ? '全部展开' : '全部收起';
+}
+
+// ===== 单独折叠每个板块 =====
+function toggleSection(header) {
+  const section = header.closest('.section');
+  if (!section) return;
+  section.classList.toggle('collapsed');
+}
+</script>
+</body>
+</html>
