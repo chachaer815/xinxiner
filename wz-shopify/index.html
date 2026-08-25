@@ -499,7 +499,10 @@
     </div>
 
     <div class="card">
-      <div class="h2">定时发品队列</div>
+      <div class="row" style="justify-content:space-between;align-items:center;">
+        <div class="h2" style="margin:0;">定时发品队列</div>
+        <button class="btn btn-danger btn-mini" id="clearDoneBtn" onclick="clearDoneQueue()">🗑 清空已完成</button>
+      </div>
       <div id="queueList" class="queue-card"></div>
       <div id="queueEmpty" class="hint" style="display:none;">暂无定时任务</div>
       <button class="btn btn-ghost btn-block" id="refreshQueueBtn">🔄 刷新队列</button>
@@ -1315,15 +1318,17 @@
             if (!thisDesc) { fail++; continue; }
             const modelLine = (thisDesc.match(/^(?:Model|S\/N|Product Code|P\/N|Part No\.?|型号|货号)[\s:：]*([^\n]{1,60})/im) || [])[1] || '';
             const insights = analyzeDescription(thisDesc, modelLine);
-            const titleValue = insights.title || 'Product';
-            const typeValue = insights.productType || typeVal || '';
+            const vendorName = curVendor || p.vendor || 'Unknown';
+            const titleValue = buildTitleFromInsights(vendorName, modelLine, insights, S.titleFormat || 0);
+            const typeValue = insights.canonicalType || typeVal || '';
             const tagsValue = insights.tags;
             const seoTitleValue = buildSeoTitleFromTitle(titleValue, insights);
             const metaDescValue = buildMetaDescription(thisDesc, insights);
             const descHtml = toHtml(thisDesc, true);
             const handleValue = buildHandleFromTitle(titleValue, modelLine);
-            let curTitle = p.title || '', curVendor = p.vendor || '';
-            try { const qr = await gqlWithRetry(`query GetProduct($id:ID!){product(id:$id){title vendor}}`, { id: p.id }); if (qr.data?.product) { curTitle = qr.data.product.title; curVendor = qr.data.product.vendor; } } catch(e4) {}
+            // 先拿当前 title 和 vendor
+            let curTitle = p.title || '', curVendor = '';
+            try { const qr = await gqlWithRetry(`query GetProduct($productId:ID!){product(id:$productId){title vendor}}`, { productId: p.id }); if (qr.data?.product) { curTitle = qr.data.product.title; curVendor = qr.data.product.vendor; } } catch(e4) {}
             const finalTitle = titleValue || curTitle;
             const productInput = {
               title: finalTitle,
@@ -1341,12 +1346,14 @@
               productInput.tags = finalTags;
             }
             const r = await gqlWithRetry(PRODUCT_UPDATE, { id: p.id, product: productInput });
-            if (r.errors && r.errors.length) { fail++; continue; }
+            if (r.errors && r.errors.length) { console.error('productUpdate errors', JSON.stringify(r.errors)); fail++; continue; }
             const ue = (r.data && r.data.productUpdate ? r.data.productUpdate.userErrors : []) || [];
-            if (ue.length > 0) { fail++; continue; }
-            if (seoTitleValue || metaDescValue) {
-              await gqlWithRetry(METAFIELDS_SET, { metafields: [{ namespace: 'seo', key: 'title', valueType: 'STRING', value: seoTitleValue || finalTitle, ownerResource: 'PRODUCT', ownerId: p.id }, { namespace: 'seo', key: 'description', valueType: 'STRING', value: metaDescValue || '', ownerResource: 'PRODUCT', ownerId: p.id }] });
-            }
+            if (ue.length > 0) { console.error('productUpdate userErrors', JSON.stringify(ue)); fail++; continue; }
+            try {
+              if (seoTitleValue || metaDescValue) {
+                await gqlWithRetry(METAFIELDS_SET, { metafields: [{ namespace: 'seo', key: 'title', valueType: 'STRING', value: seoTitleValue || finalTitle, ownerResource: 'PRODUCT', ownerId: p.id }, { namespace: 'seo', key: 'description', valueType: 'STRING', value: metaDescValue || '', ownerResource: 'PRODUCT', ownerId: p.id }] });
+              }
+            } catch(e5) { console.warn('SEO metafields warn:', e5.message); }
             ok++;
             continue;
           }
@@ -1396,6 +1403,16 @@
       } catch (e) { toast('加载队列失败：' + e.message); }
     }
     window.cancelQueue = async function(id) { try { await callCloud('cancelQueue', { id }); loadQueue(); } catch (e) { toast('失败：' + e.message); } };
+    window.clearDoneQueue = async function() {
+      if (!confirm('确定清空所有已完成/失败/已取消的队列条目？')) return;
+      try {
+        const r = await callCloud('listQueue');
+        const done = (r.items || []).filter(it => ['done','failed','cancelled'].includes(it.status));
+        for (const it of done) { await callCloud('cancelQueue', { id: it._id }); }
+        toast('已清空 ' + done.length + ' 条');
+        loadQueue();
+      } catch (e) { toast('清空失败：' + e.message); }
+    };
     window.scheduleSingle = async function() {
       const model = $('model').value.trim(); const vendor = $('vendor').value.trim();
       const title = $('title').value.trim(); const desc = $('description').value.trim();
