@@ -128,15 +128,15 @@ function toast(msg,ms=1800){const t=$('toast');t.textContent=msg;t.classList.add
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 // ===== 云函数封装 =====
-async function callCloud(action,data={}){const res=await app.callFunction({name:'wz-shopify',data:{action,...data}});if(res.result&&res.result.ok===false){throw new Error(res.result.error||'操作失败');}return res.result;}
+async function callCloud(action,data={}){console.log('[callCloud]',action,data);const res=await app.callFunction({name:'wz-shopify',data:{action,...data}});console.log('[callCloud] 结果',action,res);if(res.result&&res.result.ok===false){throw new Error(res.result.error||'操作失败');}return res.result;}
 async function gql(query,variables){const key=S.shopKeys[shopIndex()];const r=await callCloud('gql',{key,query,variables});return r.result;}
 function shopIndex(){return parseInt($('shopSelect').value||'0',10);}
 
 // ===== 初始化 =====
-async function initPublish(){app=cloudbase.init({env:ENV,region:'ap-shanghai'});try{const auth=app.auth({persistence:'local'});await auth.signInAnonymously();}catch(e){console.warn('匿名登录失败，尝试继续',e);}await loadShops();checkDraft();renderDescTemplateSelect();setInterval(tickTokenTimers,60000);}
+async function initPublish(){console.log('[boot] 开始初始化云开发...');app=cloudbase.init({env:ENV,region:'ap-shanghai'});console.log('[boot] 云开发实例已创建');try{const auth=app.auth({persistence:'local'});console.log('[boot] 开始匿名登录...');await auth.signInAnonymously();console.log('[boot] 匿名登录成功');}catch(e){console.error('[boot] 匿名登录失败：',e);}console.log('[boot] 开始加载店铺...');await loadShops();checkDraft();renderDescTemplateSelect();setInterval(tickTokenTimers,60000);console.log('[boot] 初始化完成');}
 
 // ===== 店铺管理 =====
-async function loadShops(){try{const r=await callCloud('listShops');const shops=r.shops||[];S.shops=shops;S.shopKeys=shops.map(s=>s.key);S.shopNames=shops.map(s=>s.name);S.shopStores=shops.map(s=>s.store);renderShops();renderShopSelect();if(shops.length>0)bootstrapShop();}catch(e){toast('加载店铺失败：'+e.message);}}
+async function loadShops(){console.log('[loadShops] 调用 listShops...');try{const r=await callCloud('listShops');console.log('[loadShops] 返回结果:',r);const shops=r.shops||[];S.shops=shops;S.shopKeys=shops.map(s=>s.key);S.shopNames=shops.map(s=>s.name);S.shopStores=shops.map(s=>s.store);renderShops();renderShopSelect();if(shops.length>0)bootstrapShop();}catch(e){console.error('[loadShops] 加载店铺失败：',e);toast('加载店铺失败：'+e.message);}}
 function renderShops(){const box=$('shopList');$('shopEmpty').style.display=S.shops.length===0?'block':'none';box.innerHTML=S.shops.map(s=>{const tokenHtml=s.hasToken&&s.tokenExpiresAt?`<span class="badge b-ok">令牌有效 · <span data-exp="${s.tokenExpiresAt}">${tokenCountdown(s.tokenExpiresAt)}</span></span>`:`<span class="badge b-muted">令牌未生成</span>`;return`<div class="shop-item"><div class="shop-name">${esc(s.name)}</div><div class="shop-store">${esc(s.store)}</div><div style="margin-bottom:10px;">${tokenHtml}</div><div class="row"><button class="btn btn-primary btn-mini" onclick="getToken('${esc(s.key)}')">🔑 令牌</button><button class="btn btn-ghost btn-mini" onclick="renameShop('${esc(s.key)}')">改名</button><button class="btn btn-danger btn-mini" onclick="deleteShop('${esc(s.key)}')">删除</button></div></div>`;}).join('');}
 function tokenCountdown(ts){const left=ts-Date.now();if(left<=0)return'已过期';const h=Math.floor(left/3600000);const m=Math.floor((left%3600000)/60000);if(h>0)return h+'小时'+m+'分';return m+'分钟';}
 function tickTokenTimers(){document.querySelectorAll('[data-exp]').forEach(el=>{const ts=Number(el.getAttribute('data-exp'));el.textContent=tokenCountdown(ts);});}
