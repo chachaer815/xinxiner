@@ -788,7 +788,6 @@
       if (!doImg && !doType && !doTags && !doStatus && !doDesc) { toast('请至少勾选一个要修改的字段'); return; }
       if (doType && !typeVal) { toast('请填写产品类型'); return; }
       if (doTags && !tagsVal) { toast('请填写 Tags'); return; }
-      const descs = doDesc && descText ? descText.split(/\n\s*\n/).map(d => d.trim()).filter(Boolean) : [];
       let unified = null;
       if (doImg && imgMode === 'unified') { unified = await uploadBulkUnifiedImage(); if (!unified) return; }
       S.bulkRunning = true; $('bulkRunBtn').disabled = true;
@@ -801,24 +800,23 @@
         $('bulkProgressFill').style.width = Math.round((i / sel.length) * 100) + '%';
         const pLabel = (p.title || '').substring(0, 30) || ('产品' + (i+1));
         try {
-          // 描述解析模式：重建整个产品
+          // 描述解析模式：复用 parseBatchInput（--- 分隔），和批量发品逻辑一致
           if (doDesc) {
-            const thisDesc = descs[i] || descs[0] || '';
-            if (!thisDesc) { fail++; errMsgs.push(pLabel + ': 描述为空'); continue; }
-            const modelLine = (thisDesc.match(/^(?:Model|S\/N|Product Code|P\/N|Part No\.?|型号|货号)[\s:：]*([^\n]{1,60})/im) || [])[1] || '';
-            const insights = analyzeDescription(thisDesc, modelLine);
             const vendorName = p.vendor || S.vendor || 'Unknown';
-            const titleValue = buildTitleFromInsights(vendorName, modelLine, insights, S.titleFormat || 0);
-            const typeValue = insights.canonicalType || typeVal || '';
-            const tagsValue = insights.tags;
+            const { items: parsedItems } = parseBatchInput(descText, vendorName, S.titleFormat || 0);
+            const item = parsedItems[i] || parsedItems[0];
+            if (!item || !item.model) { fail++; errMsgs.push(pLabel + ': 无法从描述中解析型号'); continue; }
+            const modelLine = item.model;
+            const cleanDesc = item.description;
+            const insights = analyzeDescription(cleanDesc || modelLine, modelLine);
+            const titleValue = item.title || buildTitleFromInsights(vendorName, modelLine, insights, S.titleFormat || 0);
+            const typeValue = item.productType || typeVal || insights.canonicalType || '';
+            const tagsValue = item.tags || insights.tags;
             const seoTitleValue = buildSeoTitleFromTitle(titleValue, insights);
-            const metaDescValue = buildMetaDescription(thisDesc, insights);
-            const descHtml = toHtml(thisDesc, true);
+            const metaDescValue = buildMetaDescription(cleanDesc || modelLine, insights);
+            const descHtml = toHtml(cleanDesc, false);
             const handleValue = buildHandleFromTitle(titleValue, modelLine);
-            // 先拿当前 title 和 vendor
-            let curTitle = p.title || '', curVendor = '';
-            try { const qr = await gqlWithRetry(`query GetProduct($productId:ID!){product(id:$productId){title vendor}}`, { productId: p.id }); if (qr.data?.product) { curTitle = qr.data.product.title; curVendor = qr.data.product.vendor; } } catch(e4) {}
-            const finalTitle = titleValue || curTitle;
+            const finalTitle = titleValue || p.title || '';
             const productInput = {
               title: finalTitle,
               descriptionHtml: descHtml,
@@ -828,7 +826,7 @@
             };
             if (doStatus) productInput.status = statusVal;
             if (doTags) {
-              let finalTags = parseTags(tagsValue.join(','));
+              let finalTags = parseTags((tagsValue || []).join(','));
               if (tagsAppend) {
                 try { const tr = await gqlWithRetry(PRODUCT_TAGS_QUERY, { id: p.id }); const oldTags = (tr.data && tr.data.product && tr.data.product.tags) || []; for (const t of finalTags) { if (!oldTags.some(o => o.toLowerCase() === t.toLowerCase())) oldTags.push(t); } finalTags = oldTags; } catch (e2) {}
               }
