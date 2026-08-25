@@ -276,7 +276,16 @@
 
       <label class='checkline' style='margin-top:6px;'><input type='checkbox' id='bulkDescOn'> 📝 重新解析描述并更新标题/类型/Tags/SEO</label>
       <div id='bulkDescOpts' style='display:none; margin:6px 0 10px 24px;'>
-        <textarea class='input' id='bulkDescInput' rows='5' placeholder='在此粘贴新的产品描述文本，每段一个产品（顺序对应选中产品）。解析后会重新生成标题、Product Type、Tags、SEO标题/描述、描述正文。'></textarea>
+        <textarea class='input' id='bulkDescInput' rows='5' placeholder='粘贴产品描述，格式和批量发品完全一致（用 --- 分隔每个产品）：
+
+型号1
+描述内容（第一行作为型号，其余作为描述）
+---
+型号2
+描述内容
+---
+型号3
+描述内容...'></textarea>
         <div class='hint' style='margin-top:4px;'>提示：每个产品的描述用空行分隔；型号在描述中自动提取（格式同发品）。</div>
       </div>
 
