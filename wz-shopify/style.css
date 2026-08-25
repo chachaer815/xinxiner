@@ -99,8 +99,8 @@
     }
     .shop-name { font-weight: 700; font-size: 16px; color: var(--ink); }
     .shop-store { font-size: 13px; color: var(--soft); margin: 4px 0 10px; word-break: break-all; }
-    .recent-table { table-layout: fixed; width: 100%; }
-    .recent-table th:first-child, .recent-table td:first-child { width: 38%; word-break: break-all; }
+    .recent-table { width: 100%; }
+    .recent-table th:first-child, .recent-table td:first-child { width: 32px; }
     .recent-table td { word-break: break-word; vertical-align: top; }
     .queue-card { overflow: hidden; }
     .queue-card .shop-item { word-break: break-all; }
