@@ -10,7 +10,7 @@
     const FILES_QUERY = `query SearchImageFiles($first: Int!, $query: String!) { files(first: $first, query: $query) { edges { node { id ... on MediaImage { alt fileStatus image { url } } } } } }`;
     const FILE_UPLOAD_URL_QUERY = `mutation GenerateUploadUrl($filename: String!) { stagedUploadsCreate(input: { filename: $filename, mimeType: "image/jpeg", resource: IMAGE, httpMethod: POST }) { stagedTargets { url parameters { name value } } } }`;
     const FILE_CREATE_MUTATION = `mutation CreateFile($file: FileCreateInput!) { fileCreate(file: $file) { file { id } userErrors { field message } } }`;
-    const RECENT_SEARCH_QUERY = `query SearchProducts($query: String!) { products(first: 20, query: $query, sortKey: CREATED_AT, reverse: true) { edges { node { id title handle status createdAt featuredMedia { ... on MediaImage { preview { image { url } } } } variants(first: 1) { edges { node { price sku } } } resourcePublicationsCount(onlyPublished: true) { count } } } } }`;
+    const RECENT_SEARCH_QUERY = `query SearchProducts($query: String!) { products(first: 20, query: $query, sortKey: CREATED_AT, reverse: true) { edges { node { id title handle status createdAt featuredMedia { ... on MediaImage { preview { image { url } } } } variants(first: 1) { edges { node { price sku inventoryQuantity inventoryItem { id sku } } } } resourcePublicationsCount(onlyPublished: true) { count } } } } }`;
     const CHECK_SKU_QUERY = `query CheckSku($query: String!) { productVariants(first: 3, query: $query) { edges { node { id sku product { id title status } } } } }`;
     const PRODUCT_CREATE = `mutation CreateProduct($product: ProductCreateInput!, $media: [CreateMediaInput!]) { productCreate(product: $product, media: $media) { product { id handle title seo { title description } variants(first: 1) { edges { node { id } } } } userErrors { field message } } }`;
     const PRODUCT_MEDIA_QUERY = `query ProductMedia($id: ID!) { product(id: $id) { id media(first: 50) { edges { node { id ... on MediaImage { preview { image { url } } } } } } } }`;
@@ -23,7 +23,7 @@
     const PUBLISH_MUTATION = `mutation PublishProduct($id: ID!, $input: [PublicationInput!]!) { publishablePublish(id: $id, input: $input) { userErrors { field message } } }`;
     const TAXONOMY_QUERY = `query TaxonomyCategories($search: String!) { taxonomy { categories(search: $search, first: 25) { edges { node { id name fullName isArchived } } } } }`;
     const SHOP_QUERY = `query ShopLastVendor { shop { id ianaTimezone lastVendor: metafield(namespace: "sidekick", key: "last_vendor") { value } } }`;
-    const RECENT_PRODUCTS_QUERY = `query RecentProducts($first: Int, $after: String, $last: Int, $before: String) { products(first: $first, after: $after, last: $last, before: $before, sortKey: CREATED_AT, reverse: true) { edges { node { id title handle status createdAt featuredMedia { ... on MediaImage { preview { image { url } } } } variants(first: 1) { edges { node { price sku } } } resourcePublicationsCount(onlyPublished: true) { count } } } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } } }`;
+    const RECENT_PRODUCTS_QUERY = `query RecentProducts($first: Int, $after: String, $last: Int, $before: String) { products(first: $first, after: $after, last: $last, before: $before, sortKey: CREATED_AT, reverse: true) { edges { node { id title handle status createdAt featuredMedia { ... on MediaImage { preview { image { url } } } } variants(first: 1) { edges { node { price sku inventoryQuantity inventoryItem { id sku } } } } resourcePublicationsCount(onlyPublished: true) { count } } } pageInfo { hasNextPage hasPreviousPage startCursor endCursor } } }`;
     const DEFINITION_QUERY = `query LastVendorDefinition { metafieldDefinition(identifier: { ownerType: SHOP, namespace: "sidekick", key: "last_vendor" }) { id } }`;
     const DEFINITION_CREATE = `mutation CreateLastVendorDefinition($definition: MetafieldDefinitionInput!) { metafieldDefinitionCreate(definition: $definition) { createdDefinition { id } userErrors { field message } } }`;
     const METAFIELDS_SET = `mutation SaveLastVendor($metafields: [MetafieldsSetInput!]!) { metafieldsSet(metafields: $metafields) { metafields { id } userErrors { field message } } }`;
@@ -318,7 +318,7 @@
         if (result.errors?.length) { S.recentError = formatErrors(result.errors); }
         else {
           const edges = result.data?.products?.edges ?? [];
-          S.recentProducts = edges.map(edge => { const node = edge.node; const vn = node?.variants?.edges?.[0]?.node ?? null; return { id: node.id, title: node.title, status: node.status, createdAt: node.createdAt, imageUrl: node?.featuredMedia?.preview?.image?.url ?? null, price: vn?.price ?? null, sku: vn?.sku ?? null, publishedCount: node?.resourcePublicationsCount?.count ?? 0 }; });
+          S.recentProducts = edges.map(edge => { const node = edge.node; const vn = node?.variants?.edges?.[0]?.node ?? null; return { id: node.id, title: node.title, status: node.status, createdAt: node.createdAt, imageUrl: node?.featuredMedia?.preview?.image?.url ?? null, price: vn?.price ?? null, sku: vn?.sku ?? null, inventoryQuantity: vn?.inventoryQuantity ?? null, inventoryItemId: vn?.inventoryItem?.id ?? null, publishedCount: node?.resourcePublicationsCount?.count ?? 0 }; });
           S.recentPageInfo = result.data?.products?.pageInfo ?? null;
         }
       } catch (err) { S.recentError = err?.message || '加载失败'; }
@@ -331,7 +331,7 @@
         if (result.errors?.length) { S.recentError = formatErrors(result.errors); }
         else {
           const edges = result.data?.products?.edges ?? [];
-          S.recentProducts = edges.map(edge => { const node = edge.node; const vn = node?.variants?.edges?.[0]?.node ?? null; return { id: node.id, title: node.title, status: node.status, createdAt: node.createdAt, imageUrl: node?.featuredMedia?.preview?.image?.url ?? null, price: vn?.price ?? null, sku: vn?.sku ?? null, publishedCount: node?.resourcePublicationsCount?.count ?? 0 }; });
+          S.recentProducts = edges.map(edge => { const node = edge.node; const vn = node?.variants?.edges?.[0]?.node ?? null; return { id: node.id, title: node.title, status: node.status, createdAt: node.createdAt, imageUrl: node?.featuredMedia?.preview?.image?.url ?? null, price: vn?.price ?? null, sku: vn?.sku ?? null, inventoryQuantity: vn?.inventoryQuantity ?? null, inventoryItemId: vn?.inventoryItem?.id ?? null, publishedCount: node?.resourcePublicationsCount?.count ?? 0 }; });
           S.recentPageInfo = null;
         }
       } catch (err) { S.recentError = err?.message || '搜索失败'; }
@@ -364,7 +364,7 @@
         if (adminLink) links.push(`<a class="recent-link" href="${esc(adminLink)}" target="_blank">后台</a>`);
         if (storeLink) links.push(`<a class="recent-link" href="${esc(storeLink)}" target="_blank">前台</a>`);
         const checked = S.bulkSelected.includes(item.id) ? 'checked' : '';
-        return `<tr><td><input type='checkbox' class='recent-check' data-id='${esc(item.id)}' data-sku='${esc(item.sku || '')}' ${checked}></td><td>${titleCell}</td><td>${item.status === 'ACTIVE' ? '<span class="badge b-ok">已上架</span>' : item.status === 'DRAFT' ? '<span class="badge b-info">草稿</span>' : '<span class="badge b-muted">归档</span>'}</td><td>${item.price ? '$' + item.price : '—'}</td><td>${esc(item.sku || '—')}</td><td class="recent-date">${formatDate(item.createdAt)}</td><td class="recent-actions">${links.join(' ')}</td></tr>`;
+        return `<tr><td><input type='checkbox' class='recent-check' data-id='${esc(item.id)}' data-sku='${esc(item.sku || '')}' data-inv='${esc(item.inventoryItemId || '')}' ${checked}></td><td>${titleCell}</td><td>${item.status === 'ACTIVE' ? '<span class="badge b-ok">已上架</span>' : item.status === 'DRAFT' ? '<span class="badge b-info">草稿</span>' : '<span class="badge b-muted">归档</span>'}</td><td>${item.price ? '$' + item.price : '—'}</td><td>${esc(item.sku || '—')}</td><td>${item.inventoryQuantity != null ? item.inventoryQuantity : '—'}</td><td class="recent-date">${formatDate(item.createdAt)}</td><td class="recent-actions">${links.join(' ')}</td></tr>`;
       }).join('');
       bindRecentChecks();
     }
@@ -663,8 +663,17 @@
         else {
           successCount++;
           if (scheduleMode) {
-            const intervalMin = parseInt($('batchInterval').value, 10);
-            const publishAt = new Date(Date.now() + (i + 1) * intervalMin * 60000).toISOString();
+            const scheduleMode2 = document.getElementById('schedSpecific')?.checked;
+            let publishAt;
+            if (scheduleMode2) {
+              const firstTime = new Date(document.getElementById('batchSpecificTime').value);
+              if (!firstTime || isNaN(firstTime.getTime())) { toast('请选择首发时间'); S.batchRunning = false; $('btnBatchRun').disabled = false; $('batchProgress').style.display = 'none'; return; }
+              const interval2 = parseInt(document.getElementById('batchInterval2')?.value || '5', 10);
+              publishAt = new Date(firstTime.getTime() + i * interval2 * 60000).toISOString();
+            } else {
+              const intervalMin = parseInt($('batchInterval').value, 10);
+              publishAt = new Date(Date.now() + (i + 1) * intervalMin * 60000).toISOString();
+            }
             const key = S.shopKeys[shopIndex()];
             try {
               await callCloud('schedule', { key, productId: result.id, publicationIds: S.publicationIds, title: result.title, publishAt });
@@ -704,6 +713,13 @@
       else { $('singleContentSection').style.display = 'none'; $('singlePreviewSection').style.display = 'none'; }
     }
     function onTitleFormatChange() { S.titleFormat = $('titleFormat').value; }
+    function onScheduleModeChange() {
+      const isSpecific = document.getElementById('schedSpecific')?.checked;
+      const opt1 = document.getElementById('schedIntervalOpts');
+      const opt2 = document.getElementById('schedSpecificOpts');
+      if (opt1) opt1.style.display = isSpecific ? 'none' : 'block';
+      if (opt2) opt2.style.display = isSpecific ? 'block' : 'none';
+    }
     function onDescFormatChange() { S.descriptionIsHtml = $('descFormat').value === 'html'; $('descFormatHint').textContent = S.descriptionIsHtml ? '当前为 HTML 模式：粘贴的 HTML 会原样写入。' : '当前为纯文本：只保留换行。'; }
 
     // ===== 批量编辑已发布产品 =====
