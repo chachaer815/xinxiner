@@ -115,15 +115,39 @@
         <div id="batchScheduleWrap" style="display:none; margin-top:10px; background:#f8f4ff; border-radius:12px; padding:10px 12px;">
           <label class="label" style="margin-bottom:6px;"><input type="checkbox" id="batchScheduleOn"> 开启批量定时</label>
           <div id="batchScheduleOpts" style="display:none; margin-top:8px;">
-            <div class="row" style="gap:8px; align-items:center;">
-              <span>每隔</span>
-              <select class="input" id="batchInterval" style="width:80px;">
-                <option value="1">1分钟</option><option value="2">2分钟</option>
-                <option value="3">3分钟</option><option value="5" selected>5分钟</option>
-                <option value="10">10分钟</option><option value="15">15分钟</option>
-                <option value="20">20分钟</option><option value="30">30分钟</option>
-              </select>
+            <div class="row" style="gap:12px; align-items:center; flex-wrap:wrap;">
+              <label class="checkline" style="margin:0;"><input type="radio" name="scheduleMode" id="schedInterval" value="interval" checked onchange="onScheduleModeChange()"> 间隔发布</label>
+              <label class="checkline" style="margin:0;"><input type="radio" name="scheduleMode" id="schedSpecific" value="specific" onchange="onScheduleModeChange()"> 指定时间</label>
             </div>
+            <div id="schedIntervalOpts" style="margin-top:8px;">
+              <div class="row" style="gap:8px; align-items:center;">
+                <span>每隔</span>
+                <select class="input" id="batchInterval" style="width:80px;">
+                  <option value="1">1分钟</option><option value="2">2分钟</option>
+                  <option value="3">3分钟</option><option value="5" selected>5分钟</option>
+                  <option value="10">10分钟</option><option value="15">15分钟</option>
+                  <option value="20">20分钟</option><option value="30">30分钟</option>
+                </select>
+                <span>发布下一个</span>
+              </div>
+            </div>
+            <div id="schedSpecificOpts" style="display:none; margin-top:8px;">
+              <div class="row" style="gap:8px; align-items:center;">
+                <span>首发时间</span>
+                <input type="datetime-local" id="batchSpecificTime" class="input" style="width:220px;">
+              </div>
+              <div class="row" style="gap:8px; align-items:center; margin-top:6px;">
+                <span>间隔</span>
+                <select class="input" id="batchInterval2" style="width:80px;">
+                  <option value="1">1分钟</option><option value="2">2分钟</option>
+                  <option value="5" selected>5分钟</option>
+                  <option value="10">10分钟</option>
+                  <option value="30">30分钟</option>
+                </select>
+                <span>发布下一个（所有产品顺序发布）</span>
+              </div>
+            </div>
+          </div>
           </div>
         </div>
         <button class="btn btn-primary btn-block" id="btnBatchRun" style="margin-top:14px;">✅ 批量创建并上架</button>
@@ -246,7 +270,7 @@
         <input class="input" id="recentSearchInput" placeholder="搜索型号或 SKU...">
       </div>
       <table class="recent-table" style="margin-top:12px;width:100%;">
-        <thead><tr><th style='width:38px;'><input type='checkbox' id='selectAllRecentHead'></th><th>商品</th><th>状态</th><th>售价</th><th>SKU</th><th>创建时间</th><th>操作</th></tr></thead>
+        <thead><tr><th style='width:38px;'><input type='checkbox' id='selectAllRecentHead'></th><th>商品</th><th>状态</th><th>售价</th><th>SKU</th><th>库存</th><th>创建时间</th><th>操作</th></tr></thead>
         <tbody id="recentBody"><tr><td colspan="7" class="hint">加载中…</td></tr></tbody>
       </table>
     </div>
