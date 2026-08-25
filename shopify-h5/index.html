@@ -561,14 +561,25 @@
 <script src="tools.js?v=20260825"></script>
 
 <script>
-// ===== 主框架初始化 =====
-(function init() {
-  // 初始化发品模块
-  initPublish();
+// ===== 主框架初始化（与旧版一致的启动顺序） =====
+(async function boot() {
+  // 初始化云开发 + 加载店铺
+  await initPublish();
 
   // 绑定发品事件
   bindPublishEvents();
 
+  // 初始化格式说明
+  onDescFormatChange();
+
+  // 加载队列
+  loadQueue();
+
+  // 定时刷新令牌倒计时
+  setInterval(tickTokenTimers, 1000);
+
+  // 定时刷新定时队列
+  setInterval(loadQueue, 30000);
   // 初始化汇率货币列表
   const exFrom = document.getElementById('exFrom');
   const exTo = document.getElementById('exTo');
