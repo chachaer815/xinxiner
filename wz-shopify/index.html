@@ -477,6 +477,12 @@
         <label class='checkline' style='margin-top:6px;'><input type='checkbox' id='bulkTagsAppend' checked> 追加到原有 Tags（不勾则覆盖）</label>
       </div>
 
+      <label class='checkline' style='margin-top:6px;'><input type='checkbox' id='bulkDescOn'> 📝 重新解析描述并更新标题/类型/Tags/SEO</label>
+      <div id='bulkDescOpts' style='display:none; margin:6px 0 10px 24px;'>
+        <textarea class='input' id='bulkDescInput' rows='5' placeholder='在此粘贴新的产品描述文本，每段一个产品（顺序对应选中产品）。解析后会重新生成标题、Product Type、Tags、SEO标题/描述、描述正文。'></textarea>
+        <div class='hint' style='margin-top:4px;'>提示：每个产品的描述用空行分隔；型号在描述中自动提取（格式同发品）。</div>
+      </div>
+
       <label class='checkline' style='margin-top:6px;'><input type='checkbox' id='bulkStatusOn'> 📦 修改上架状态</label>
       <select class='input' id='bulkStatus' style='margin:6px 0 10px 24px; display:none; width:160px;'>
         <option value='ACTIVE'>上架 (ACTIVE)</option>
@@ -1237,6 +1243,7 @@
       $('bulkTypeOn').checked = false; $('bulkType').style.display = 'none';
       $('bulkTagsOn').checked = false; $('bulkTagsOpts').style.display = 'none';
       $('bulkStatusOn').checked = false; $('bulkStatus').style.display = 'none';
+      $('bulkDescOn').checked = false; $('bulkDescOpts').style.display = 'none';
       $('bulkUnifiedWrap').style.display = 'none';
       $('bulkEditPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
@@ -1285,9 +1292,13 @@
       const tagsAppend = $('bulkTagsAppend').checked;
       const doStatus = $('bulkStatusOn').checked;
       const statusVal = $('bulkStatus').value;
-      if (!doImg && !doType && !doTags && !doStatus) { toast('请至少勾选一个要修改的字段'); return; }
+      const doDesc = $('bulkDescOn').checked;
+      const descText = $('bulkDescInput').value;
+      if (doDesc && !descText.trim()) { toast('请先粘贴描述文本'); return; }
+      if (!doImg && !doType && !doTags && !doStatus && !doDesc) { toast('请至少勾选一个要修改的字段'); return; }
       if (doType && !typeVal) { toast('请填写产品类型'); return; }
       if (doTags && !tagsVal) { toast('请填写 Tags'); return; }
+      const descs = doDesc && descText ? descText.split(/\n\s*\n/).map(d => d.trim()).filter(Boolean) : [];
       let unified = null;
       if (doImg && imgMode === 'unified') { unified = await uploadBulkUnifiedImage(); if (!unified) return; }
       S.bulkRunning = true; $('bulkRunBtn').disabled = true;
@@ -1298,7 +1309,52 @@
         $('bulkProgressText').textContent = '处理 ' + (i + 1) + '/' + sel.length + '…';
         $('bulkProgressFill').style.width = Math.round((i / sel.length) * 100) + '%';
         try {
+          // 描述解析模式：重建整个产品
+          if (doDesc) {
+            const thisDesc = descs[i] || descs[0] || '';
+            if (!thisDesc) { fail++; continue; }
+            const modelLine = (thisDesc.match(/^(?:Model|S\/N|Product Code|P\/N|Part No\.?|型号|货号)[\s:：]*([^\n]{1,60})/im) || [])[1] || '';
+            const insights = analyzeDescription(thisDesc, modelLine);
+            const titleValue = insights.title || 'Product';
+            const typeValue = insights.productType || typeVal || '';
+            const tagsValue = insights.tags;
+            const seoTitleValue = buildSeoTitleFromTitle(titleValue, insights);
+            const metaDescValue = buildMetaDescription(thisDesc, insights);
+            const descHtml = toHtml(thisDesc, true);
+            const handleValue = buildHandleFromTitle(titleValue, modelLine);
+            let curTitle = p.title || '', curVendor = p.vendor || '';
+            try { const qr = await gqlWithRetry(`query GetProduct($id:ID!){product(id:$id){title vendor}}`, { id: p.id }); if (qr.data?.product) { curTitle = qr.data.product.title; curVendor = qr.data.product.vendor; } } catch(e4) {}
+            const finalTitle = titleValue || curTitle;
+            const productInput = {
+              title: finalTitle,
+              descriptionHtml: descHtml,
+              handle: handleValue || undefined,
+              productType: typeValue || undefined,
+              tags: tagsValue,
+            };
+            if (doStatus) productInput.status = statusVal;
+            if (doTags) {
+              let finalTags = parseTags(tagsValue.join(','));
+              if (tagsAppend) {
+                try { const tr = await gqlWithRetry(PRODUCT_TAGS_QUERY, { id: p.id }); const oldTags = (tr.data && tr.data.product && tr.data.product.tags) || []; for (const t of finalTags) { if (!oldTags.some(o => o.toLowerCase() === t.toLowerCase())) oldTags.push(t); } finalTags = oldTags; } catch (e2) {}
+              }
+              productInput.tags = finalTags;
+            }
+            const r = await gqlWithRetry(PRODUCT_UPDATE, { id: p.id, product: productInput });
+            if (r.errors && r.errors.length) { fail++; continue; }
+            const ue = (r.data && r.data.productUpdate ? r.data.productUpdate.userErrors : []) || [];
+            if (ue.length > 0) { fail++; continue; }
+            if (seoTitleValue || metaDescValue) {
+              await gqlWithRetry(METAFIELDS_SET, { metafields: [{ namespace: 'seo', key: 'title', valueType: 'STRING', value: seoTitleValue || finalTitle, ownerResource: 'PRODUCT', ownerId: p.id }, { namespace: 'seo', key: 'description', valueType: 'STRING', value: metaDescValue || '', ownerResource: 'PRODUCT', ownerId: p.id }] });
+            }
+            ok++;
+            continue;
+          }
+
+          // 单独换图
           if (doImg) { const msg = await replaceProductImages(p.id, p.sku, imgMode === 'unified' ? unified : null); if (msg) { fail++; continue; } }
+
+          // 单独字段更新
           const productInput = {};
           if (doType) productInput.productType = typeVal;
           if (doStatus) productInput.status = statusVal;
@@ -1316,6 +1372,7 @@
             if (ue.length > 0) { fail++; continue; }
           }
           ok++;
+
         } catch (e3) { fail++; }
       }
       $('bulkProgressFill').style.width = '100%';
@@ -1458,6 +1515,7 @@
       $('bulkTypeOn').addEventListener('change', function() { $('bulkType').style.display = this.checked ? 'block' : 'none'; });
       $('bulkTagsOn').addEventListener('change', function() { $('bulkTagsOpts').style.display = this.checked ? 'block' : 'none'; });
       $('bulkStatusOn').addEventListener('change', function() { $('bulkStatus').style.display = this.checked ? 'block' : 'none'; });
+      $('bulkDescOn').addEventListener('change', function() { $('bulkDescOpts').style.display = this.checked ? 'block' : 'none'; });
       $('selectAllRecent').addEventListener('change', function() { document.querySelectorAll('.recent-check').forEach(cb => { cb.checked = this.checked; }); updateBulkSelCount(); });
       $('selectAllRecentHead').addEventListener('change', function() { document.querySelectorAll('.recent-check').forEach(cb => { cb.checked = this.checked; }); updateBulkSelCount(); });
       $('recentSearchInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') { const q = e.target.value.trim(); if (q) searchRecentProducts(q); } });
