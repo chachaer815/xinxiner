@@ -238,9 +238,11 @@
     // ===== 店铺初始化 =====
     async function bootstrapShop() {
       try {
-        const loc = await gqlWithRetry(LOCATIONS_QUERY);
-        S.locationId = loc.data?.locations?.edges?.[0]?.node?.id || '';
-        if (!S.locationId) S.locationWarning = '无法获取默认地点，库存数量将不会写入';
+        try {
+          const loc = await gqlWithRetry(LOCATIONS_QUERY);
+          S.locationId = loc.data?.locations?.edges?.[0]?.node?.id || '';
+          if (!S.locationId) S.locationWarning = '无法获取默认地点，库存数量将不会写入';
+        } catch (e) { S.locationWarning = '无法读取库存地点：' + (e?.message || '未知错误'); }
 
         try {
           const shopResult = await gqlWithRetry(SHOP_QUERY);
@@ -252,7 +254,7 @@
           if (!defResult.errors?.length && !defResult.data?.metafieldDefinition?.id) {
             await gqlWithRetry(DEFINITION_CREATE, { definition: { name: '上次使用的厂商', namespace: 'sidekick', key: 'last_vendor', type: 'single_line_text_field', ownerType: 'SHOP', description: '半自动发品助手记录的上次使用的厂商名称', access: { storefront: 'NONE' } } });
           }
-        } catch (e) { S.settingsWarning = err?.message || '初始化厂商记忆失败'; }
+        } catch (e) { S.settingsWarning = e?.message || '初始化厂商记忆失败'; }
 
         try {
           const pub = await gqlWithRetry(PUBLICATIONS_QUERY);
@@ -519,16 +521,24 @@
         else { const vue = variantResult.data?.productVariantsBulkUpdate?.userErrors ?? []; if (vue.length > 0) outcome.warning = `价格/SKU/条码写入失败：${formatUserErrors(vue)}`; }
 
         const invId = variantResult.data?.productVariantsBulkUpdate?.productVariants?.[0]?.inventoryItem?.id;
-        if (invId && S.locationId && params.quantity > 0) {
-          const ir = await gqlWithRetry(INVENTORY_SET, { input: { name: 'available', reason: 'correction', quantities: [{ inventoryItemId: invId, locationId: S.locationId, quantity: params.quantity }] } });
+        let invLocationId = S.locationId;
+        if (!invLocationId) {
+          try { const locR = await gqlWithRetry(LOCATIONS_QUERY); invLocationId = locR.data?.locations?.edges?.[0]?.node?.id || ''; } catch (e) {}
+        }
+        if (invId && invLocationId && params.quantity > 0) {
+          const ir = await gqlWithRetry(INVENTORY_SET, { input: { name: 'available', reason: 'correction', quantities: [{ inventoryItemId: invId, locationId: invLocationId, quantity: params.quantity }] } });
           if (ir.errors?.length) outcome.warning = outcome.warning ? `${outcome.warning} 库存写入失败：${formatErrors(ir.errors)}` : `库存写入失败：${formatErrors(ir.errors)}`;
           else { const iue = ir.data?.inventorySetQuantities?.userErrors ?? []; if (iue.length > 0) outcome.warning = outcome.warning ? `${outcome.warning} 库存写入失败：${formatUserErrors(iue)}` : `库存写入失败：${formatUserErrors(iue)}`; }
+        } else if (invId && params.quantity > 0) {
+          outcome.warning = outcome.warning ? `${outcome.warning} 库存未写入：未获取到库存地点(locationId 为空，请检查应用权限 read_locations)` : `库存未写入：未获取到库存地点(locationId 为空，请检查应用权限 read_locations)`;
         }
 
         if (params.status !== 'DRAFT' && S.publicationIds.length > 0) {
           const pr = await gqlWithRetry(PUBLISH_MUTATION, { id: product.id, input: S.publicationIds.map(pid => ({ publicationId: pid })) });
           if (pr.errors?.length) outcome.warning = outcome.warning ? `${outcome.warning} 渠道上架失败：${formatErrors(pr.errors)}` : `渠道上架失败：${formatErrors(pr.errors)}`;
           else { const pue = pr.data?.publishablePublish?.userErrors ?? []; if (pue.length > 0) outcome.warning = outcome.warning ? `${outcome.warning} 渠道上架失败：${formatUserErrors(pue)}` : `渠道上架失败：${formatUserErrors(pue)}`; }
+        } else if (params.status !== 'DRAFT') {
+          outcome.warning = outcome.warning ? `${outcome.warning} 未分配到任何销售渠道(publicationIds 为空)` : `未分配到任何销售渠道(publicationIds 为空)`;
         }
         return outcome;
       } catch (err) { outcome.error = err?.message || '创建产品时发生错误'; return outcome; }
