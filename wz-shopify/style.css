@@ -250,7 +250,7 @@
       border-color: #ffe3ef;
       box-shadow: 0 4px 0 -2px rgba(255, 143, 192, 0.35), 0 6px 12px rgba(214, 180, 220, 0.2);
     }
-    .nav-icon { font-size: 24px; line-height: 1; }
+    .nav-icon { font-size: 20px; line-height: 1; }
     .nav-label { font-size: 11px; font-weight: 700; line-height: 1.2; }
     .main {
       grid-area: main;
@@ -258,7 +258,7 @@
       padding: 16px;
       background: transparent;
     }
-    .panel { display: none; }
+    .panel { display: none; width: 90%; margin: 0 auto; }
     .panel.active { display: block; }
 
     /* 手机适配：底部导航 */
@@ -278,7 +278,7 @@
         overflow-x: auto; overflow-y: hidden;
       }
       .nav-item { flex: 1; min-width: 64px; padding: 6px 2px; }
-      .nav-icon { font-size: 22px; }
+      .nav-icon { font-size: 19px; }
       .nav-label { font-size: 10px; }
       .main { padding: 12px; }
     }
