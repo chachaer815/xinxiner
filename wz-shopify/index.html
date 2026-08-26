@@ -20,7 +20,12 @@
     <!-- ① 店铺与令牌 -->
     <div class="section"><div class="num">①</div><div class="t">店铺与令牌</div></div>
     <div class="card">
-      <div class="h2">已添加店铺</div>
+      <div class="shop-head" id="shopToggle">
+        <span class="shop-arrow" id="shopArrow">▸</span>
+        <span class="h2" style="margin:0;">已添加店铺</span>
+        <span class="shop-count" id="shopCount"></span>
+      </div>
+      <div id="shopListWrap" style="display:none;">
       <div id="shopList"></div>
       <div id="shopEmpty" class="hint" style="display:none;">还没有店铺，点下面「添加店铺」吧～</div>
       <button class="btn btn-ghost btn-block" id="toggleAddShop">➕ 添加店铺</button>
@@ -35,10 +40,32 @@
         <input class="input" id="newSecret" />
         <button class="btn btn-primary btn-block" id="addShopBtn">添加店铺</button>
       </div>
+      </div>
     </div>
 
-    <!-- ② 快速发品 -->
-    <div class="section"><div class="num">②</div><div class="t">快速发品</div></div>
+    <!-- ② 批量上传图片 -->
+    <div class="section"><div class="num">②</div><div class="t">批量上传图片</div></div>
+    <div class="card">
+      <div class="label">目标店铺</div>
+      <select class="input" id="uploadShopSelect"></select>
+      <div id="uploadDropzone" class="dropzone">
+        <div class="dz-icon">🖼️</div>
+        <div class="dz-text">把图片拖到这里，或点击选择 / 直接粘贴 (Ctrl+V)</div>
+        <div class="dz-sub">支持 JPG / PNG / WebP / GIF，原图直传，可一次选多张</div>
+        <input type="file" id="uploadFileInput" accept="image/*" multiple style="display:none;">
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <button class="btn btn-primary btn-mini" id="uploadStartBtn">🚀 开始上传</button>
+        <button class="btn btn-ghost btn-mini" id="uploadClearBtn">清空列表</button>
+        <button class="btn btn-ghost btn-mini" id="uploadOpenLibBtn">📚 打开文件库</button>
+      </div>
+      <div class="progress" id="uploadProgress" style="display:none; margin-top:12px;"><div class="spin"></div><span id="uploadProgressText"></span></div>
+      <div class="progress-bar" id="uploadProgressBar" style="display:none; margin-top:8px;"><div class="fill" id="uploadProgressFill" style="width:0%;"></div></div>
+      <div id="uploadList" class="upload-list"></div>
+    </div>
+
+    <!-- ③ 快速发品 -->
+    <div class="section"><div class="num">③</div><div class="t">快速发品</div></div>
     <div class="card">
       <div class="label">目标店铺</div>
       <select class="input" id="shopSelect"></select>
@@ -71,13 +98,6 @@
           <option value="html" selected>HTML 代码（原样保留）</option>
           <option value="plain">纯文本（自动分段）</option>
         </select>
-
-        <div class="label">描述模板</div>
-        <div class="row">
-          <select class="input" id="descTemplate" style="flex:2;"><option value="">— 选择模板 —</option></select>
-          <button class="btn btn-ghost btn-mini" id="saveTemplateBtn" style="flex:0 0 auto;">💾 存</button>
-          <button class="btn btn-ghost btn-mini" id="deleteTemplateBtn" style="flex:0 0 auto;">🗑</button>
-        </div>
 
         <div class="label">Shopify 产品类别 (Category)</div>
         <div class="row">
@@ -252,8 +272,8 @@
       <button class="btn btn-primary btn-block" id="createBtn" style="margin-top:14px;">✅ 创建并上架</button>
     </div>
 
-    <!-- ③ 最近发品 + 定时队列 -->
-    <div class="section"><div class="num">③</div><div class="t">数据与队列</div></div>
+    <!-- ④ 最近发品 + 定时队列 -->
+    <div class="section"><div class="num">④</div><div class="t">数据与队列</div></div>
     <div class="card">
       <div class="topbar">
         <span class="h2" style="margin:0;">最近发品</span>

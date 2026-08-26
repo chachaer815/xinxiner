@@ -98,11 +98,11 @@
 
     // ===== GraphQL 重试封装（429 限流自动重试） =====
     const MAX_RETRIES = 3;
-    async function gqlWithRetry(query, variables) {
+    async function gqlWithRetry(query, variables, key) {
       let lastErr;
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
         try {
-          const result = await gql(query, variables);
+          const result = await gql(query, variables, key);
           if (result?.errors?.some(e => /THROTTLED|429|rate limit/i.test(e.message || ''))) {
             if (attempt < MAX_RETRIES) { const wait = Math.pow(2, attempt) * 1000; await new Promise(r => setTimeout(r, wait)); continue; }
           }
@@ -123,13 +123,6 @@
     function hideVendorList(listId) { setTimeout(() => { $(listId).classList.remove('show'); }, 200); }
     window.pickVendor = function(inputId, listId, name) { $(inputId).value = name; S.vendor = name; hideVendorList(listId); if (inputId === 'vendor') $('batchVendor').value = name; };
 
-    // ===== 描述模板 =====
-    function getDescTemplates() { try { return JSON.parse(localStorage.getItem('wz_desc_templates') || '{}'); } catch { return {}; } }
-    function renderDescTemplateSelect() { const templates = getDescTemplates(); const names = Object.keys(templates); const sel = $('descTemplate'); sel.innerHTML = '<option value="">— 选择模板 —</option>' + names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join(''); }
-    function applyDescTemplate(name) { const templates = getDescTemplates(); if (templates[name]) { $('description').value = templates[name]; S.description = templates[name]; toast('模板已填入 ✓'); } }
-    function saveDescTemplate() { const name = prompt('模板名称：', ''); if (!name?.trim()) return; const templates = getDescTemplates(); templates[name.trim()] = $('description').value; localStorage.setItem('wz_desc_templates', JSON.stringify(templates)); renderDescTemplateSelect(); $('descTemplate').value = name.trim(); toast('模板已保存 ✓'); }
-    function deleteDescTemplate() { const sel = $('descTemplate'); const name = sel.value; if (!name) { toast('请先选择要删除的模板'); return; } if (!confirm(`删除模板「${name}」？`)) return; const templates = getDescTemplates(); delete templates[name]; localStorage.setItem('wz_desc_templates', JSON.stringify(templates)); renderDescTemplateSelect(); toast('已删除'); }
-
     // ===== 草稿箱 =====
     function saveDraft() {
       const draft = { model: $('model').value, vendor: $('vendor').value, title: $('title').value, description: $('description').value, seoTitle: $('seoTitle').value, metaDescription: $('metaDescription').value, handle: $('handle').value, sku: $('sku').value, productType: $('productType').value, barcode: $('barcode').value, inventoryQuantity: $('inventoryQuantity').value, tags: $('tags').value, mode: S.mode, titleFormat: S.titleFormat, savedAt: Date.now() };
@@ -141,10 +134,10 @@
     function discardDraft() { localStorage.removeItem('wz_draft'); $('draftBanner').style.display = 'none'; S._pendingDraft = null; toast('草稿已丢弃'); }
 
     // ===== 图片上传 =====
-    async function uploadImageFile(file) {
+    async function uploadImageFile(file, key) {
       try {
         const filename = file.name || `upload_${Date.now()}.jpg`;
-        const stagedResult = await gqlWithRetry(FILE_UPLOAD_URL_QUERY, { filename });
+        const stagedResult = await gqlWithRetry(FILE_UPLOAD_URL_QUERY, { filename }, key);
         if (stagedResult.errors?.length) throw new Error(formatErrors(stagedResult.errors));
         const target = stagedResult.data?.stagedUploadsCreate?.stagedTargets?.[0];
         if (!target?.url) throw new Error('无法获取上传地址');
@@ -154,7 +147,7 @@
         const uploadResp = await fetch(target.url, { method: 'POST', body: formData });
         if (!uploadResp.ok) throw new Error('上传文件失败（' + uploadResp.status + '）');
         const fileUrl = target.url + '/' + (target.parameters.find(p => p.name === 'key')?.value || filename);
-        const createResult = await gqlWithRetry(FILE_CREATE_MUTATION, { file: { filename, originalSource: fileUrl, contentType: 'IMAGE' } });
+        const createResult = await gqlWithRetry(FILE_CREATE_MUTATION, { file: { filename, originalSource: fileUrl, contentType: 'IMAGE' } }, key);
         if (createResult.errors?.length) throw new Error(formatErrors(createResult.errors));
         const cue = createResult.data?.fileCreate?.userErrors ?? [];
         if (cue.length > 0) throw new Error(formatUserErrors(cue));
@@ -162,6 +155,91 @@
         if (!fileId) throw new Error('文件创建未返回 ID');
         return { id: fileId, url: fileUrl, alt: filename, filename };
       } catch (err) { throw new Error('图片上传失败：' + (err?.message || '未知错误')); }
+    }
+
+    // ===== 批量上传图片（纯上传到文件库） =====
+    const UPLOAD_CONCURRENCY = 3;
+    const uploadState = { files: [], running: false, done: 0, ok: 0, fail: 0 };
+    function uploadShopKey() { return S.shopKeys[parseInt($('uploadShopSelect').value || '0', 10)] || ''; }
+    function addUploadFiles(fileList) {
+      const arr = Array.from(fileList || []).filter(f => f && f.type && f.type.startsWith('image/'));
+      if (arr.length === 0) { toast('没有可用的图片文件'); return; }
+      const seen = new Set(uploadState.files.map(f => f.name + ':' + f.size + ':' + f.lastModified));
+      for (const f of arr) {
+        const sig = f.name + ':' + f.size + ':' + f.lastModified;
+        if (seen.has(sig)) continue;
+        seen.add(sig);
+        uploadState.files.push({ file: f, status: 'pending', msg: '', url: '' });
+      }
+      renderUploadList();
+      toast(`已加入 ${arr.length} 张，共 ${uploadState.files.length} 张待传`);
+    }
+    function clearUploadList() {
+      if (uploadState.running) { toast('上传中，请稍候'); return; }
+      uploadState.files = []; uploadState.done = 0; uploadState.ok = 0; uploadState.fail = 0;
+      $('uploadProgress').style.display = 'none'; $('uploadProgressBar').style.display = 'none';
+      $('uploadFileInput').value = ''; renderUploadList();
+    }
+    function renderUploadList() {
+      const box = $('uploadList');
+      if (uploadState.files.length === 0) { box.innerHTML = '<div class="hint" style="text-align:center;padding:8px;">还没有图片，拖进来 / 点框 / Ctrl+V 试试吧～</div>'; return; }
+      box.innerHTML = uploadState.files.map((it, i) => {
+        let badge = '';
+        if (it.status === 'pending') badge = '<span class="badge b-muted">待传</span>';
+        else if (it.status === 'uploading') badge = '<span class="badge b-pending">上传中</span>';
+        else if (it.status === 'success') badge = '<span class="badge b-ok">成功</span>';
+        else badge = '<span class="badge b-err">失败</span>';
+        const msg = it.msg ? `<div class="up-msg">${esc(it.msg)}</div>` : '';
+        const act = it.status === 'success'
+          ? `<button class="btn btn-ghost btn-mini" onclick="copyUploadUrl(${i})">复制链接</button>`
+          : `<button class="btn btn-ghost btn-mini" onclick="removeUploadItem(${i})">移除</button>`;
+        return `<div class="up-item"><div class="up-name">${esc(it.file.name)} <span class="up-size">${(it.file.size / 1024).toFixed(0)}KB</span></div><div class="up-status">${badge}${act}</div>${msg}</div>`;
+      }).join('');
+    }
+    window.removeUploadItem = function(i) { if (uploadState.running) return; uploadState.files.splice(i, 1); renderUploadList(); };
+    window.copyUploadUrl = async function(i) { const it = uploadState.files[i]; if (!it || !it.url) return; const ok = await copyText(it.url); toast(ok ? '链接已复制 ✓' : it.url); };
+    async function runUpload() {
+      if (uploadState.running) return;
+      const pending = uploadState.files.filter(f => f.status === 'pending' || f.status === 'error');
+      if (pending.length === 0) { toast('没有待上传的图片'); return; }
+      if (!uploadShopKey()) { toast('请先在店铺与令牌里添加店铺'); return; }
+      pending.forEach(f => { f.status = 'pending'; f.msg = ''; });
+      uploadState.running = true; uploadState.done = 0; uploadState.ok = 0; uploadState.fail = 0;
+      $('uploadStartBtn').disabled = true; $('uploadClearBtn').disabled = true;
+      $('uploadProgress').style.display = 'flex'; $('uploadProgressBar').style.display = 'block';
+      renderUploadList();
+      const queue = pending.slice();
+      const total = queue.length;
+      let idx = 0;
+      const update = () => {
+        const done = uploadState.ok + uploadState.fail;
+        $('uploadProgressText').textContent = `正在上传 ${done}/${total}（成功 ${uploadState.ok} · 失败 ${uploadState.fail}）`;
+        $('uploadProgressFill').style.width = Math.round(done / total * 100) + '%';
+      };
+      update();
+      async function worker() {
+        while (idx < queue.length) {
+          const item = queue[idx++];
+          if (uploadState.running === false) break;
+          item.status = 'uploading'; renderUploadList();
+          try {
+            const r = await uploadImageFile(item.file, uploadShopKey());
+            item.status = 'success'; item.url = r.url; uploadState.ok += 1;
+          } catch (e) {
+            item.status = 'error'; item.msg = e.message; uploadState.fail += 1;
+          }
+          update(); renderUploadList();
+        }
+      }
+      const workers = [];
+      for (let w = 0; w < UPLOAD_CONCURRENCY; w++) workers.push(worker());
+      await Promise.all(workers);
+      uploadState.running = false;
+      $('uploadStartBtn').disabled = false; $('uploadClearBtn').disabled = false;
+      const summary = `上传完成：成功 ${uploadState.ok} 张${uploadState.fail > 0 ? `，失败 ${uploadState.fail} 张` : ''}`;
+      $('uploadProgressText').textContent = summary;
+      toast(summary);
+      if (uploadState.ok > 0) $('uploadOpenLibBtn').style.display = '';
     }
 
     // ===== 状态 =====
@@ -197,9 +275,9 @@
       if (res.result && res.result.ok === false) { throw new Error(res.result.error || '操作失败'); }
       return res.result;
     }
-    async function gql(query, variables) {
-      const key = S.shopKeys[shopIndex()];
-      const r = await callCloud('gql', { key, query, variables });
+    async function gql(query, variables, key) {
+      const k = key || S.shopKeys[shopIndex()];
+      const r = await callCloud('gql', { key: k, query, variables });
       return r.result;
     }
     function shopIndex() { return parseInt($('shopSelect').value || '0', 10); }
@@ -224,6 +302,7 @@
     function renderShops() {
       const box = $('shopList');
       $('shopEmpty').style.display = S.shops.length === 0 ? 'block' : 'none';
+      $('shopCount').textContent = S.shops.length > 0 ? `（${S.shops.length}）` : '';
       box.innerHTML = S.shops.map(s => {
         const tokenHtml = s.hasToken && s.tokenExpiresAt ? `<span class="badge b-ok">令牌有效 · <span data-exp="${s.tokenExpiresAt}">${tokenCountdown(s.tokenExpiresAt)}</span></span>` : `<span class="badge b-muted">令牌未生成</span>`;
         return `<div class="shop-item"><div class="shop-name">${esc(s.name)}</div><div class="shop-store">${esc(s.store)}</div><div style="margin-bottom:10px;">${tokenHtml}</div><div class="row"><button class="btn btn-primary btn-mini" onclick="getToken('${esc(s.key)}')">🔑 令牌</button><button class="btn btn-ghost btn-mini" onclick="renameShop('${esc(s.key)}')">改名</button><button class="btn btn-danger btn-mini" onclick="deleteShop('${esc(s.key)}')">删除</button></div></div>`;
@@ -233,7 +312,7 @@
     function tokenCountdown(ts) { const left = ts - Date.now(); if (left <= 0) return '已过期'; const h = Math.floor(left / 3600000); const m = Math.floor((left % 3600000) / 60000); if (h > 0) return h + '小时' + m + '分'; return m + '分钟'; }
     function tickTokenTimers() { document.querySelectorAll('[data-exp]').forEach(el => { const ts = Number(el.getAttribute('data-exp')); el.textContent = tokenCountdown(ts); }); }
 
-    function renderShopSelect() { $('shopSelect').innerHTML = S.shops.map((s, i) => `<option value="${i}">${esc(s.name)}（${esc(s.store)}）</option>`).join(''); }
+    function renderShopSelect() { const opts = S.shops.map((s, i) => `<option value="${i}">${esc(s.name)}（${esc(s.store)}）</option>`).join(''); $('shopSelect').innerHTML = opts; $('uploadShopSelect').innerHTML = opts; }
 
     // ===== 店铺初始化 =====
     async function bootstrapShop() {
@@ -991,6 +1070,21 @@
       $('restoreDraftBtn').addEventListener('click', restoreDraft);
       $('discardDraftBtn').addEventListener('click', discardDraft);
       $('toggleAddShop').addEventListener('click', () => { const f = $('addShopForm'); const willShow = f.style.display === 'none'; f.style.display = willShow ? 'block' : 'none'; $('toggleAddShop').textContent = willShow ? '🔼 收起添加店铺' : '➕ 添加店铺'; });
+      $('shopToggle').addEventListener('click', () => { const wrap = $('shopListWrap'); const show = wrap.style.display === 'none'; wrap.style.display = show ? 'block' : 'none'; $('shopArrow').textContent = show ? '▾' : '▸'; });
+
+      // ===== 批量上传图片事件 =====
+      const dz = $('uploadDropzone');
+      dz.addEventListener('click', () => $('uploadFileInput').click());
+      $('uploadFileInput').addEventListener('change', (e) => { addUploadFiles(e.target.files); e.target.value = ''; });
+      ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dz.classList.add('drag'); }));
+      ['dragleave', 'dragend'].forEach(ev => dz.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dz.classList.remove('drag'); }));
+      dz.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); dz.classList.remove('drag'); addUploadFiles(e.dataTransfer.files); });
+      document.addEventListener('paste', (e) => { const items = Array.from(e.clipboardData?.items || []).filter(it => it.type && it.type.startsWith('image/')); if (items.length === 0) return; const files = items.map(it => it.getAsFile()).filter(Boolean); if (files.length > 0) { e.preventDefault(); addUploadFiles(files); toast('已从剪贴板加入 ' + files.length + ' 张'); } });
+      $('uploadStartBtn').addEventListener('click', runUpload);
+      $('uploadClearBtn').addEventListener('click', clearUploadList);
+      $('uploadOpenLibBtn').addEventListener('click', () => { const store = S.shopStores[parseInt($('uploadShopSelect').value || '0', 10)] || ''; if (store) window.open(`https://${store}/admin/content/files`, '_blank'); });
+      $('uploadShopSelect').addEventListener('change', () => {});
+
       $('addShopBtn').addEventListener('click', async () => {
         const store = $('newStore').value.trim().toLowerCase(); const name = $('newName').value.trim(); const clientId = $('newClientId').value.trim(); const clientSecret = $('newSecret').value.trim();
         if (!store || !clientId || !clientSecret) { toast('域名、Client ID、Secret 都要填'); return; }
@@ -1003,9 +1097,6 @@
       $('mode').addEventListener('change', onModeChange);
       $('titleFormat').addEventListener('change', onTitleFormatChange);
       $('descFormat').addEventListener('change', onDescFormatChange);
-      $('descTemplate').addEventListener('change', (e) => { if (e.target.value) applyDescTemplate(e.target.value); });
-      $('saveTemplateBtn').addEventListener('click', saveDescTemplate);
-      $('deleteTemplateBtn').addEventListener('click', deleteDescTemplate);
       $('btnCatSearch').addEventListener('click', () => { const term = $('categorySearch').value.trim(); if (term) loadCategories(term); });
       $('pubSelectAll').addEventListener('click', () => { S.publicationIds = S.publications.map(p => p.id); renderPublications(); });
       $('pubSelectNone').addEventListener('click', () => { S.publicationIds = []; renderPublications(); });
@@ -1080,8 +1171,8 @@
       await initCloud();
       bindEvents();
       onDescFormatChange();
-      renderDescTemplateSelect();
       checkDraft();
+      renderUploadList();
       loadShops();
       loadQueue();
       setInterval(tickTokenTimers, 1000);

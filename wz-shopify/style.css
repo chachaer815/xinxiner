@@ -35,7 +35,7 @@
     }
 
     .card {
-      max-width: 100%; overflow: hidden;
+      max-width: 100%; overflow: visible;
       background: var(--cream);
       border-radius: 24px 16px 26px 18px / 18px 26px 16px 24px;
       border: 2px solid #ffe3ef;
@@ -204,4 +204,26 @@
     .progress-bar .fill { height: 100%; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 4px; transition: width .3s; }
 
     .draft-banner { background: #fff8e7; border: 2px solid #ffe4a8; border-radius: 14px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; color: #b8860b; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+    .shop-head { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; padding: 2px 0; }
+    .shop-arrow { font-size: 16px; color: var(--purple-d); width: 18px; transition: transform .18s; display: inline-block; }
+    .shop-count { font-size: 12px; color: var(--soft); margin-left: auto; }
+
+    .dropzone {
+      margin-top: 12px; border: 2px dashed var(--purple); border-radius: 18px 14px 19px 15px;
+      background: #fdf7fb; padding: 26px 16px; text-align: center; cursor: pointer; transition: .15s;
+    }
+    .dropzone:hover, .dropzone.drag { border-color: var(--pink-d); background: #fff0f7; }
+    .dropzone.drag { box-shadow: 0 0 0 4px rgba(255, 143, 192, 0.2); }
+    .dz-icon { font-size: 34px; }
+    .dz-text { font-size: 15px; font-weight: 700; color: var(--ink); margin-top: 6px; }
+    .dz-sub { font-size: 12px; color: var(--soft); margin-top: 4px; }
+
+    .upload-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .up-item { border: 2px solid var(--line); border-radius: 14px 10px 15px 12px; background: #fff; padding: 10px 12px; }
+    .up-name { font-size: 13.5px; font-weight: 600; color: var(--ink); word-break: break-all; }
+    .up-size { font-size: 11px; color: var(--soft); font-weight: 400; margin-left: 6px; }
+    .up-status { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .up-msg { font-size: 11.5px; color: #e04a86; margin-top: 4px; word-break: break-all; }
+
   
