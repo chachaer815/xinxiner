@@ -1,11 +1,279 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0; url=./baojia-query/">
-    <title>正在跳转...</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>丸子の工作台 · Wanzi Space</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23ffd6a5'/%3E%3Ccircle cx='32' cy='32' r='24' fill='%23fffdf8'/%3E%3Ctext x='32' y='44' font-size='30' text-anchor='middle'%3E🎀%3C/text%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg: #fff8ec;
+      --ink: #6b5a5a;
+      --ink-light: #9e8e88;
+      --line: #eaddc5;
+      --card: #fffdf8;
+      --pink: #ffd6e5;
+      --pink-d: #ff9ec4;
+      --yellow: #ffebb5;
+      --mint: #c7f0d8;
+      --purple: #dcd3ff;
+      --shadow: 0 6px 0 -2px rgba(107,90,90,0.08), 0 8px 18px rgba(107,90,90,0.12);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Yuanti SC", "YouYuan", "Comic Sans MS", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(160px 160px at 10% 10%, rgba(255, 214, 229, 0.55), transparent 60%),
+        radial-gradient(200px 200px at 92% 8%, rgba(255, 235, 181, 0.55), transparent 60%),
+        radial-gradient(220px 220px at 6% 92%, rgba(220, 211, 255, 0.5), transparent 60%),
+        linear-gradient(165deg, #fff8ec 0%, #fffdf8 45%, #fdf6ff 100%);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 20px 16px 40px;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; }
+
+    /* 顶部标题 */
+    .header {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--card); border: 2px solid var(--line);
+      border-radius: 28px 22px 30px 24px;
+      box-shadow: var(--shadow);
+      padding: 18px 20px;
+      margin-bottom: 18px;
+    }
+    .avatar {
+      width: 58px; height: 58px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--pink), var(--yellow));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 30px; border: 3px solid var(--card); box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+      flex-shrink: 0;
+    }
+    .title-main { font-size: 22px; font-weight: 700; margin: 0; }
+    .title-sub { font-size: 12px; color: var(--ink-light); letter-spacing: 1.5px; margin-top: 2px; text-transform: uppercase; }
+
+    /* 快捷按钮 */
+    .quick-row {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .quick-btn {
+      flex: 1; min-width: 90px;
+      background: var(--card); border: 2px solid var(--line);
+      border-radius: 18px 14px 19px 15px;
+      box-shadow: var(--shadow);
+      padding: 10px 12px; text-align: center;
+      font-size: 14px; font-weight: 600; color: var(--ink);
+      cursor: pointer; transition: transform .08s;
+    }
+    .quick-btn:active { transform: scale(0.96); }
+    .quick-btn .icon { display: block; font-size: 20px; margin-bottom: 4px; }
+
+    /* 时间 + 鸡汤 */
+    .hero {
+      background: var(--card); border: 2px solid var(--line);
+      border-radius: 26px 20px 28px 22px;
+      box-shadow: var(--shadow);
+      padding: 18px 20px;
+      margin-bottom: 18px;
+    }
+    .time-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .time { font-size: 32px; font-weight: 700; letter-spacing: 1px; }
+    .date { font-size: 14px; color: var(--ink-light); margin-top: 2px; }
+    .clock-btn {
+      background: var(--yellow); border: 2px solid var(--line);
+      border-radius: 18px; padding: 8px 14px;
+      font-size: 14px; font-weight: 700; color: var(--ink);
+      cursor: pointer; box-shadow: var(--shadow);
+    }
+    .quote {
+      margin-top: 14px; padding: 14px 16px;
+      background: linear-gradient(135deg, rgba(255,214,229,0.25), rgba(255,235,181,0.25));
+      border-radius: 18px 14px 19px 15px;
+      border: 1px dashed var(--line);
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .quote-text { font-size: 14px; font-weight: 600; line-height: 1.5; }
+    .quote-en { font-size: 12px; color: var(--ink-light); margin-top: 3px; font-style: italic; }
+    .quote-refresh { width: 34px; height: 34px; border-radius: 12px; border: 2px solid var(--line); background: #fff; cursor: pointer; font-size: 16px; }
+
+    /* 应用区标题 */
+    .section-title {
+      display: flex; align-items: center; gap: 10px;
+      margin: 26px 0 14px;
+    }
+    .section-title .icon { width: 36px; height: 36px; border-radius: 12px 9px 13px 10px; background: var(--pink); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .section-title h2 { font-size: 19px; font-weight: 700; margin: 0; }
+    .section-title p { font-size: 13px; color: var(--ink-light); margin: 0 0 0 10px; }
+
+    /* 应用卡片网格 */
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 12px;
+    }
+    .app-card {
+      background: var(--card); border: 2px solid var(--line);
+      border-radius: 22px 16px 23px 18px;
+      box-shadow: var(--shadow);
+      padding: 16px 10px 14px;
+      text-align: center;
+      text-decoration: none; color: var(--ink);
+      cursor: pointer; transition: transform .1s;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .app-card:active { transform: scale(0.96); }
+    .app-card .app-icon {
+      width: 52px; height: 52px; border-radius: 18px 14px 19px 15px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; background: linear-gradient(135deg, var(--pink), var(--yellow));
+      border: 2px solid var(--line);
+    }
+    .app-card .app-name { font-size: 14px; font-weight: 700; line-height: 1.3; }
+    .app-card .app-desc { font-size: 11px; color: var(--ink-light); line-height: 1.3; }
+    .app-card.pink .app-icon { background: linear-gradient(135deg, #ffd6e5, #ff9ec4); }
+    .app-card.yellow .app-icon { background: linear-gradient(135deg, #ffebb5, #ffd884); }
+    .app-card.mint .app-icon { background: linear-gradient(135deg, #c7f0d8, #9be0b8); }
+    .app-card.purple .app-icon { background: linear-gradient(135deg, #dcd3ff, #b8a7ff); }
+    .app-card.blue .app-icon { background: linear-gradient(135deg, #c7ecff, #94d7ff); }
+    .app-card.peach .app-icon { background: linear-gradient(135deg, #ffd9c7, #ffb895); }
+    .app-card.locked { opacity: 0.65; cursor: not-allowed; filter: grayscale(0.35); }
+
+    /* 最近动态 */
+    .activity {
+      background: var(--card); border: 2px solid var(--line);
+      border-radius: 24px 18px 26px 20px;
+      box-shadow: var(--shadow);
+      padding: 16px 18px;
+      margin-top: 20px;
+    }
+    .activity h3 { font-size: 16px; margin: 0 0 10px; }
+    .activity ul { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.9; color: var(--ink-light); }
+    .activity li { margin-bottom: 4px; }
+
+    .footer { text-align: center; font-size: 12px; color: var(--ink-light); margin-top: 30px; }
+
+    /* 小屏适配 */
+    @media (max-width: 480px) {
+      .time { font-size: 26px; }
+      .app-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
 </head>
 <body>
-    <p>正在跳转到 <a href="./baojia-query/">baojia-query</a>...</p>
+  <div class="wrap">
+    <!-- 顶部 -->
+    <div class="header">
+      <div class="avatar">🎀</div>
+      <div>
+        <div class="title-main">丸子の工作台</div>
+        <div class="title-sub">Wanzi Space · My Sweet Desk</div>
+      </div>
+    </div>
+
+    <!-- 快捷按钮 -->
+    <div class="quick-row">
+      <div class="quick-btn" onclick="location.href='./wz-shopify/'"><span class="icon">🛍️</span>Shopify</div>
+      <div class="quick-btn" onclick="location.href='./baojia-query/'"><span class="icon">📊</span>报价查询</div>
+      <div class="quick-btn locked" title="敬请期待"><span class="icon">🖼️</span>图库</div>
+      <div class="quick-btn locked" title="敬请期待"><span class="icon">⚙️</span>设置</div>
+    </div>
+
+    <!-- 时间 + 鸡汤 -->
+    <div class="hero">
+      <div class="time-row">
+        <div>
+          <div class="time" id="clock">--:--:--</div>
+          <div class="date" id="date">--</div>
+        </div>
+        <button class="clock-btn" onclick="refreshQuote()">✨ 换一句</button>
+      </div>
+      <div class="quote">
+        <div>
+          <div class="quote-text" id="quoteText">好运藏在努力里。</div>
+          <div class="quote-en" id="quoteEn">Good luck hides inside hard work.</div>
+        </div>
+        <button class="quote-refresh" onclick="refreshQuote()">🌤</button>
+      </div>
+    </div>
+
+    <!-- 应用入口 -->
+    <div class="section-title">
+      <div class="icon">🧸</div>
+      <h2>我的应用</h2>
+      <p>工作 &amp; 生活小工具</p>
+    </div>
+    <div class="app-grid">
+      <a class="app-card pink" href="./wz-shopify/">
+        <div class="app-icon">🛍️</div>
+        <div class="app-name">Shopify<br>快速发品</div>
+        <div class="app-desc">批量上传 + 发品</div>
+      </a>
+      <a class="app-card yellow" href="./baojia-query/">
+        <div class="app-icon">📊</div>
+        <div class="app-name">CozyPrice<br>报价查询</div>
+        <div class="app-desc">云端报价速查</div>
+      </a>
+      <a class="app-card mint" href="./shopify-h5/">
+        <div class="app-icon">🛒</div>
+        <div class="app-name">Shopify<br>H5</div>
+        <div class="app-desc">移动端店铺页</div>
+      </a>
+      <div class="app-card purple locked" title="敬请期待">
+        <div class="app-icon">📝</div>
+        <div class="app-name">每日<br>计划</div>
+        <div class="app-desc">开发中</div>
+      </div>
+      <div class="app-card blue locked" title="敬请期待">
+        <div class="app-icon">🖼️</div>
+        <div class="app-name">图片<br>工具箱</div>
+        <div class="app-desc">开发中</div>
+      </div>
+      <div class="app-card peach locked" title="敬请期待">
+        <div class="app-icon">🚀</div>
+        <div class="app-name">更多<br>项目</div>
+        <div class="app-desc">开发中</div>
+      </div>
+    </div>
+
+    <!-- 最近动态 -->
+    <div class="activity">
+      <h3>🌱 最近更新</h3>
+      <ul>
+        <li>Shopify 发品新增「批量上传图片」功能</li>
+        <li>店铺面板支持折叠，厂商下拉修复遮挡</li>
+        <li>工作台首页上线，未来新项目会陆续放进这里</li>
+      </ul>
+    </div>
+
+    <div class="footer">丸子の工作台 · 由 小宝儿~ 精心搭建 (◕ᴗ◕✿)</div>
+  </div>
+
+  <script>
+    const quotes = [
+      { zh: '好运藏在努力里。', en: 'Good luck hides inside hard work.' },
+      { zh: '今天也是闪闪发亮的一天。', en: 'Make today count.' },
+      { zh: '慢慢来，比较快。', en: 'Slow and steady wins the race.' },
+      { zh: '保持热爱，奔赴山海。', en: 'Stay passionate, chase your dreams.' },
+      { zh: '做自己喜欢的事，永远不会太晚。', en: 'It is never too late to do what you love.' },
+      { zh: '每一个小进步都值得庆祝。', en: 'Every small step deserves a celebration.' },
+      { zh: '先完成，再完美。', en: 'Done is better than perfect.' }
+    ];
+    function updateClock() {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      document.getElementById('clock').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+      document.getElementById('date').textContent = now.toLocaleDateString('zh-CN', options);
+    }
+    function refreshQuote() {
+      const q = quotes[Math.floor(Math.random() * quotes.length)];
+      document.getElementById('quoteText').textContent = q.zh;
+      document.getElementById('quoteEn').textContent = q.en;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
 </body>
 </html>
