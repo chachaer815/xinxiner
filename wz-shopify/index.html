@@ -3,21 +3,100 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>丸子の工作宝宝</title>
+  <title>丸子の小家 · My Sweet Home</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23ffb7d2'/%3E%3Ccircle cx='32' cy='32' r='24' fill='%23fffdf8'/%3E%3Ctext x='32' y='44' font-size='30' text-anchor='middle'%3E%F0%9F%8E%90%3C/text%3E%3C/svg%3E" />
   <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.32.0/cloudbase.full.js"></script>
-  <link rel="stylesheet" href="style.css?v=20260826b">
+  <link rel="stylesheet" href="style.css?v=20260826c">
 </head>
 <body>
-  <div class="ws-shell" id="app">
-    <!-- 顶部栏 -->
+<div class="layout" id="app">
+  <!-- 左侧边栏 -->
+  <aside>
+    <div class="logo">
+      <div class="logo-icon" id="logoIcon">🎀</div>
+      <div>
+        <h1>丸子の小家</h1>
+        <div class="sub">MY SWEET HOME</div>
+      </div>
+    </div>
+    <nav id="navList">
+      <button class="nav-item active" data-target="publish">
+        <span class="ni-img">🛍️</span>
+        <span>Shopify 发品</span>
+      </button>
+      <button class="nav-item" data-target="beauty">
+        <span class="ni-img">💪</span>
+        <span>变瘦变美</span>
+      </button>
+      <button class="nav-item" data-target="food">
+        <span class="ni-img">🍱</span>
+        <span>好好吃饭</span>
+      </button>
+      <button class="nav-item" data-target="knowledge">
+        <span class="ni-img">📚</span>
+        <span>我的知识</span>
+      </button>
+      <button class="nav-item" data-target="status">
+        <span class="ni-img">💊</span>
+        <span>我的情况</span>
+      </button>
+      <button class="nav-item" data-target="assets">
+        <span class="ni-img">🐷</span>
+        <span>我的资产</span>
+      </button>
+      <button class="nav-item" data-target="travel">
+        <span class="ni-img">✈️</span>
+        <span>我的旅行</span>
+      </button>
+      <button class="nav-item" data-target="yearly">
+        <span class="ni-img">🏁</span>
+        <span>年度计划</span>
+      </button>
+    </nav>
+    <div class="side-foot">
+      <button><span>✏️</span>改名字</button>
+      <button><span>☁️</span>云同步</button>
+      <button><span>💾</span>备份</button>
+      <button><span>⬇️</span>导入</button>
+      <button><span>🎨</span>换肤</button>
+    </div>
+  </aside>
+
+  <!-- 主内容 -->
+  <main>
+    <!-- 吸顶三卡片 -->
+    <div class="sticky-head">
+      <div class="desk-top">
+        <div class="desk-card clock-card">
+          <div>
+            <div class="clock-time" id="clockTime">--:--:--</div>
+            <div class="clock-date" id="clockDate">--</div>
+          </div>
+          <div class="clock-deco">☀️</div>
+        </div>
+        <div class="desk-card checkin-card">
+          <button id="checkinBtn" class="sb-check"><span>📍</span>今日打卡</button>
+          <div class="checkin-info">
+            累计 <b id="checkinTotal">0</b> 天 · 连续 <b id="checkinStreak">0</b> 天
+            <div>🏅 勋章墙</div>
+          </div>
+        </div>
+        <div class="desk-card quote-card">
+          <div class="quote-tag"><span>☀️</span>每日一句 · DAILY BOOST</div>
+          <div class="quote-zh" id="quoteZh">好运藏在努力里。</div>
+          <div class="quote-en" id="quoteEn">Good luck hides inside hard work.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 各页面 -->
+    <div class="panel show" id="panel-publish">
+<!-- 顶部栏 -->
     <div class="topbar-ws">
       <div class="ws-brand">🎐 丸子の工作宝宝</div>
       <div class="ws-time" id="wsTime">--:--</div>
     </div>
-
-    <div class="workspace">
-    <!-- 左侧导航 -->
+<!-- 左侧导航 -->
     <nav class="sidebar">
       <div class="nav-item active" data-panel="publish" title="Shopify 发品">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
@@ -34,8 +113,7 @@
     </nav>
 
     <!-- 右侧主内容 -->
-    <main class="main">
-    <div id="draftBanner" class="draft-banner" style="display:none;">
+<div id="draftBanner" class="draft-banner" style="display:none;">
       <span>📝 上次有未完成的发品草稿</span>
       <div class="row"><button class="btn btn-ghost btn-mini" id="restoreDraftBtn">恢复</button><button class="btn btn-ghost btn-mini" id="discardDraftBtn">丢弃</button></div>
     </div>
@@ -398,7 +476,6 @@
         <div class="hint">这里会陆续加入丸子的新模块。<br>有想法随时告诉人家～</div>
       </div>
     </div>
-  </main>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -425,5 +502,121 @@
     })();
   </script>
   <script src="publish.js?v=20260826b"></script>
+</div>
+
+
+    <section class="page" id="page-beauty">
+      <div class="page-title"><div class="pt-icon">💪</div><h2>变瘦变美</h2><span class="desc">目标体重、姨妈周期、喝水护理，一站管齐</span></div>
+      <div class="card"><h3><span>⚖️</span>我的体重目标</h3><div class="hint">功能开发中，敬请期待～</div></div>
+      <div class="grid-2"><div class="card"><h3><span>📝</span>体重记录</h3><div class="hint">功能开发中</div></div><div class="card"><h3><span>💧</span>喝水打卡（目标 8 杯）</h3><div class="hint">功能开发中</div></div></div>
+      <div class="card"><h3><span>✨</span>今日护理小目标</h3><div class="hint">功能开发中</div></div>
+    </section>
+
+    <section class="page" id="page-food">
+      <div class="page-title"><div class="pt-icon">🍱</div><h2>好好吃饭</h2><span class="desc">三餐打卡 + 月历回看，顿顿都热气腾腾</span></div>
+      <div class="card"><h3><span>🍚</span>吃饭月历</h3><div class="hint">功能开发中，敬请期待～</div></div>
+      <div class="card"><h3><span>🥢</span>今日饮食小记</h3><div class="hint">功能开发中</div></div>
+    </section>
+
+    <section class="page" id="page-knowledge">
+      <div class="page-title"><div class="pt-icon">📚</div><h2>我的知识</h2><span class="desc">学到的都收进小本本，越攒越富有</span></div>
+      <div class="card"><h3><span>🧠</span>收进知识库</h3><div class="hint">功能开发中，敬请期待～</div></div>
+    </section>
+
+    <section class="page" id="page-status">
+      <div class="page-title"><div class="pt-icon">💊</div><h2>我的情况</h2><span class="desc">心情睡眠能量 + 健康，趋势都看得见</span></div>
+      <div class="card"><h3><span>😊</span>今天心情怎么样？</h3><div class="hint">功能开发中，敬请期待～</div></div>
+      <div class="card"><h3><span>🌙</span>昨晚睡了多久</h3><div class="hint">功能开发中</div></div>
+      <div class="card"><h3><span>⚡</span>今日能量值</h3><div class="hint">功能开发中</div></div>
+      <div class="card"><h3><span>🏥</span>我的健康档案</h3><div class="hint">功能开发中</div></div>
+    </section>
+
+    <section class="page" id="page-assets">
+      <div class="page-title"><div class="pt-icon">🐷</div><h2>我的资产</h2><span class="desc">收支记账，资产一目了然</span></div>
+      <div class="card"><h3><span>💰</span>账户总览</h3><div class="hint">功能开发中，敬请期待～</div></div>
+      <div class="card"><h3><span>📒</span>最近收支</h3><div class="hint">功能开发中</div></div>
+    </section>
+
+    <section class="page" id="page-travel">
+      <div class="page-title"><div class="pt-icon">✈️</div><h2>我的旅行</h2><span class="desc">想去的地方，慢慢抵达</span></div>
+      <div class="card"><h3><span>🗺️</span>旅行计划</h3><div class="hint">功能开发中，敬请期待～</div></div>
+    </section>
+
+    <section class="page" id="page-yearly">
+      <div class="page-title"><div class="pt-icon">🏁</div><h2>年度计划</h2><span class="desc">大目标拆成小里程碑</span></div>
+      <div class="card"><h3><span>🎯</span>年度目标</h3><div class="hint">功能开发中，敬请期待～</div></div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const quotes = [
+    { zh: '好运藏在努力里。', en: 'Good luck hides inside hard work.' },
+    { zh: '今天也是闪闪发亮的一天。', en: 'Make today count.' },
+    { zh: '慢慢来，比较快。', en: 'Slow and steady wins the race.' },
+    { zh: '保持热爱，奔赴山海。', en: 'Stay passionate, chase your dreams.' },
+    { zh: '做自己喜欢的事，永远不会太晚。', en: "It's never too late to do what you love." },
+    { zh: '每一个小进步都值得庆祝。', en: 'Every small step deserves a celebration.' },
+    { zh: '先完成，再完美。', en: 'Done is better than perfect.' }
+  ];
+  const pages = document.querySelectorAll('.page');
+  const navs = document.querySelectorAll('.nav-item');
+  function showPage(name){
+    pages.forEach(p => p.classList.remove('show'));
+    navs.forEach(n => n.classList.remove('active'));
+    const target = document.getElementById('page-' + name);
+    if(target) target.classList.add('show');
+    const btn = document.querySelector('.nav-item[data-target="' + name + '"]');
+    if(btn) btn.classList.add('active');
+  }
+  navs.forEach(btn => {
+    btn.addEventListener('click', () => showPage(btn.dataset.target));
+  });
+
+  function updateClock(){
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    document.getElementById('clockTime').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const opts = { year:'numeric', month:'long', day:'numeric', weekday:'long' };
+    document.getElementById('clockDate').textContent = now.toLocaleDateString('zh-CN', opts);
+  }
+  function refreshQuote(){
+    const q = quotes[Math.floor(Math.random()*quotes.length)];
+    document.getElementById('quoteZh').textContent = q.zh;
+    document.getElementById('quoteEn').textContent = q.en;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+  refreshQuote();
+  // 简单的累计打卡（localStorage）
+  const CK = 'wz_checkin_v1';
+  function renderCheckin(){
+    const today = new Date().toLocaleDateString('zh-CN');
+    let data = JSON.parse(localStorage.getItem(CK) || '{"total":0,"last":"","streak":0}');
+    const btn = document.getElementById('checkinBtn');
+    const totalEl = document.getElementById('checkinTotal');
+    const streakEl = document.getElementById('checkinStreak');
+    totalEl.textContent = data.total;
+    streakEl.textContent = data.streak;
+    if(data.last === today){ btn.classList.add('done'); btn.innerHTML = '<span>✅</span>已打卡'; }
+    else { btn.classList.remove('done'); btn.innerHTML = '<span>📍</span>今日打卡'; }
+    btn.onclick = () => {
+      if(data.last === today) return;
+      const prev = new Date(data.last || Date.now());
+      const now = new Date();
+      const diff = Math.floor((now - prev)/(1000*60*60*24));
+      data.streak = (diff===1) ? data.streak+1 : 1;
+      data.total++; data.last = today;
+      localStorage.setItem(CK, JSON.stringify(data));
+      renderCheckin();
+    };
+  }
+  renderCheckin();
+})();
+</script>
+<script src="publish.js?v=20260826c"></script>
 </body>
 </html>
