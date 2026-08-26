@@ -9,29 +9,26 @@
   <link rel="stylesheet" href="style.css?v=20260826b">
 </head>
 <body>
-  <div class="workspace" id="app">
+  <div class="ws-shell" id="app">
     <!-- 顶部栏 -->
     <div class="topbar-ws">
       <div class="ws-brand">🎐 丸子の工作宝宝</div>
       <div class="ws-time" id="wsTime">--:--</div>
     </div>
 
+    <div class="workspace">
     <!-- 左侧导航 -->
     <nav class="sidebar">
       <div class="nav-item active" data-panel="publish" title="Shopify 发品">
-        <span class="nav-icon">🛍️</span>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         <span class="nav-label">Shopify<br>发品</span>
       </div>
-      <div class="nav-item" data-panel="files" title="文件库">
-        <span class="nav-icon">🖼️</span>
-        <span class="nav-label">文件库</span>
-      </div>
       <div class="nav-item" data-panel="todo" title="每日计划">
-        <span class="nav-icon">📝</span>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
         <span class="nav-label">每日计划</span>
       </div>
       <div class="nav-item" data-panel="more" title="更多">
-        <span class="nav-icon">✨</span>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span class="nav-label">更多</span>
       </div>
     </nav>
@@ -385,14 +382,6 @@
       <button class="btn btn-ghost btn-block" id="refreshQueueBtn">🔄 刷新队列</button>
     </div>
     </div><!-- /panel-publish -->
-
-    <!-- 文件库 -->
-    <div class="panel" id="panel-files">
-      <div class="card">
-        <div class="h2">🖼️ 文件库</div>
-        <div class="hint">这里将展示已上传到 Shopify 文件库的图片，可按文件名搜索、复制链接。<br>功能开发中，先使用左侧「Shopify 发品」→「批量上传图片」上传。</div>
-      </div>
-    </div>
 
     <!-- 每日计划 -->
     <div class="panel" id="panel-todo">
