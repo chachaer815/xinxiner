@@ -9,7 +9,7 @@
     const PUBLICATIONS_QUERY = `query SalesChannels { publications(first: 25) { edges { node { id catalog { title } } } } }`;
     const FILES_QUERY = `query SearchImageFiles($first: Int!, $query: String!) { files(first: $first, query: $query) { edges { node { id ... on MediaImage { alt fileStatus image { url } } } } } }`;
     const FILE_UPLOAD_URL_QUERY = `mutation GenerateUploadUrl($filename: String!) { stagedUploadsCreate(input: { filename: $filename, mimeType: "image/jpeg", resource: IMAGE, httpMethod: POST }) { stagedTargets { url parameters { name value } } } }`;
-    const FILE_CREATE_MUTATION = `mutation CreateFile($file: FileCreateInput!) { fileCreate(file: $file) { file { id } userErrors { field message } } }`;
+    const FILE_CREATE_MUTATION = `mutation CreateFile($files: [FileCreateInput!]!) { fileCreate(files: $files) { files { id } userErrors { field message } } }`;
     const RECENT_SEARCH_QUERY = `query SearchProducts($query: String!) { products(first: 20, query: $query, sortKey: CREATED_AT, reverse: true) { edges { node { id title handle status createdAt featuredMedia { ... on MediaImage { preview { image { url } } } } variants(first: 1) { edges { node { price sku inventoryQuantity inventoryItem { id sku } } } } resourcePublicationsCount(onlyPublished: true) { count } } } } }`;
     const CHECK_SKU_QUERY = `query CheckSku($query: String!) { productVariants(first: 3, query: $query) { edges { node { id sku product { id title status } } } } }`;
     const PRODUCT_CREATE = `mutation CreateProduct($product: ProductCreateInput!, $media: [CreateMediaInput!]) { productCreate(product: $product, media: $media) { product { id handle title seo { title description } variants(first: 1) { edges { node { id } } } } userErrors { field message } } }`;
@@ -147,11 +147,12 @@
         const uploadResp = await fetch(target.url, { method: 'POST', body: formData });
         if (!uploadResp.ok) throw new Error('上传文件失败（' + uploadResp.status + '）');
         const fileUrl = target.url + '/' + (target.parameters.find(p => p.name === 'key')?.value || filename);
-        const createResult = await gqlWithRetry(FILE_CREATE_MUTATION, { file: { filename, originalSource: fileUrl, contentType: 'IMAGE' } }, key);
+        const createResult = await gqlWithRetry(FILE_CREATE_MUTATION, { files: [{ filename, originalSource: fileUrl, contentType: 'IMAGE' }] }, key);
         if (createResult.errors?.length) throw new Error(formatErrors(createResult.errors));
         const cue = createResult.data?.fileCreate?.userErrors ?? [];
         if (cue.length > 0) throw new Error(formatUserErrors(cue));
-        const fileId = createResult.data?.fileCreate?.file?.id;
+        const files = createResult.data?.fileCreate?.files ?? [];
+        const fileId = files[0]?.id;
         if (!fileId) throw new Error('文件创建未返回 ID');
         return { id: fileId, url: fileUrl, alt: filename, filename };
       } catch (err) { throw new Error('图片上传失败：' + (err?.message || '未知错误')); }
