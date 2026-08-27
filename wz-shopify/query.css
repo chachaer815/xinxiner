@@ -158,3 +158,19 @@
 }
 .nav-item.drop-before::before { top: -5px; }
 .nav-item.drop-after::after { bottom: -5px; }
+
+/* ===== CozyPrice 报价面板 ===== */
+.price-frame-wrap {
+  width: 100%; height: calc(100vh - 100px);
+  border-radius: 20px 14px 22px 16px;
+  overflow: hidden;
+  background: #fff;
+  border: 2px solid var(--line);
+  box-shadow: 0 8px 0 -2px rgba(255, 183, 210, 0.3), 0 12px 24px rgba(214, 180, 220, 0.2);
+}
+.price-frame {
+  width: 100%; height: 100%; border: none; display: block;
+}
+@media (max-width: 640px) {
+  .price-frame-wrap { height: calc(100dvh - 140px); border-radius: 16px; }
+}
