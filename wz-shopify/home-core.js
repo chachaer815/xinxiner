@@ -80,10 +80,14 @@
     localStorage.setItem(LS_KEY, JSON.stringify(store));
     return store;
   }
+  let pushTimer = null;
   function save() {
     if (!store) return;
     store.updatedAt = Date.now();
     localStorage.setItem(LS_KEY, JSON.stringify(store));
+    // 自动云同步（防抖）
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(() => cloudPush().catch(() => {}), 3000);
   }
   function getStore() { return store; }
 
@@ -122,7 +126,62 @@
     box.addEventListener('click', e => { if (e.target === box) close(); });
   }
 
-  // ===== AI 调用（火山引擎接入点） =====
+  // ===== 云同步（腾讯云开发 · wz- 前缀） =====
+  const CLOUD_ENV_ID = 'wanwan-d2gafa9gobac0b79b';
+  let cloudApp = null, cloudReady = false;
+
+  async function cloudInit() {
+    if (cloudReady) return cloudApp;
+    if (!window.cloudbase) throw new Error('云开发 SDK 未加载');
+    if (!cloudApp) {
+      cloudApp = cloudbase.init({ env: CLOUD_ENV_ID });
+      await cloudApp.auth({ persistence: 'local' }).anonymousAuthProvider().signIn();
+      cloudReady = true;
+    }
+    return cloudApp;
+  }
+
+  async function cloudPush() {
+    try {
+      const app = await cloudInit();
+      const res = await app.callFunction({ name: 'wz-sync', data: { action: 'set', uid: getUid(), data: store } });
+      return res.result && res.result.code === 0;
+    } catch (e) {
+      console.warn('云端推送失败', e);
+      return false;
+    }
+  }
+
+  async function cloudPull() {
+    try {
+      const app = await cloudInit();
+      const res = await app.callFunction({ name: 'wz-sync', data: { action: 'get', uid: getUid() } });
+      if (res.result && res.result.code === 0 && res.result.data) {
+        const remote = migrate(res.result.data);
+        // 冲突策略：取 updatedAt 较新的
+        if (!store.updatedAt || (remote.updatedAt || 0) > store.updatedAt) {
+          store = remote;
+          localStorage.setItem(LS_KEY, JSON.stringify(store));
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      console.warn('云端拉取失败', e);
+      return false;
+    }
+  }
+
+  function getUid() {
+    let uid = localStorage.getItem(LS_KEY + ':uid');
+    if (!uid) {
+      uid = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+      localStorage.setItem(LS_KEY + ':uid', uid);
+    }
+    return uid;
+  }
+
+  // ===== AI 调用（云函数代理 → 回退直连） =====
   async function aiAsk(prompt, system) {
     const s = store;
     if (!s.ai || !s.ai.key) throw new Error('请先在设置里填入 API Key');
