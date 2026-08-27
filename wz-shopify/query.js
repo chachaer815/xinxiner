@@ -422,7 +422,7 @@
     const apiUrl = SUPABASE_URL + '/functions/v1/packaging-ai';
     fetch(apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY },
       body: JSON.stringify({ content: input })
     }).then(res => res.json())
       .then(data => {
@@ -486,7 +486,8 @@
         const tr = document.createElement('tr');
         if (match) {
           found++;
-          tr.innerHTML = '<td>' + (i + 1) + '</td><td><b>' + esc(pn) + '</b></td><td>' + esc(match.title) + '</td><td><a href="' + esc(storeBase) + '/products/' + esc(match.handle) + '" target="_blank">查看链接</a></td>';
+          const fullUrl = storeBase + '/products/' + match.handle;
+          tr.innerHTML = '<td>' + (i + 1) + '</td><td><b>' + esc(pn) + '</b></td><td>' + esc(match.title) + '</td><td><a href="' + esc(fullUrl) + '" target="_blank">' + esc(fullUrl) + '</a></td>';
         } else {
           tr.className = 'notfound';
           tr.innerHTML = '<td>' + (i + 1) + '</td><td><b>' + esc(pn) + '</b></td><td colspan="2">❌ 未收录</td>';
