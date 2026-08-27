@@ -9,17 +9,53 @@
   const FOLD_KEY = 'wz_query_fold_v1';
 
   let draggedItem = null;
+  let curPanel = 'index';
+  const QUOTES = [
+    ['今天也要元气满满', 'Stay sweet'],
+    ['慢慢来，比较快', 'Slow is smooth'],
+    ['把日子过成喜欢的样子', 'Live your way'],
+    ['每一步都算数', 'Every step counts'],
+    ['温柔且坚定', 'Gentle & firm'],
+    ['好好生活，慢慢相遇', 'Live well, love slow'],
+    ['你负责努力，时间给惊喜', 'Keep going'],
+    ['小小的坚持，大大的改变', 'Small steps'],
+  ];
+  function refreshQuote() {
+    const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+    const zh = document.getElementById('navQuoteZh');
+    const en = document.getElementById('navQuoteEn');
+    if (zh) zh.textContent = q[0];
+    if (en) en.textContent = q[1];
+  }
 
   // ===== 面板切换 =====
   // wanzi-mini 页面映射
-  const HOME_PAGES = { beauty: 'beauty', status: 'status', asset: 'asset', travel: 'travel', yearly: 'yearly', todo: 'plan' };
+  const HOME_PAGES = { index: 'index', beauty: 'beauty', status: 'status', asset: 'asset', travel: 'travel', yearly: 'yearly', todo: 'plan', settings: 'settings' };
+  // 抽屉全菜单（业务 + 小家页面）
+  const DRAWER_NAVS = [
+    { id: 'index', name: '小家', icon: 'wm-logo', tab: true },
+    { id: 'publish', name: '发品宝宝', icon: 'publish', tab: false },
+    { id: 'todo', name: '每日计划', icon: 'wm-plan', tab: false },
+    { id: 'query', name: '查询宝宝', icon: 'query', tab: false },
+    { id: 'price', name: '报价宝宝', icon: 'price', tab: false },
+    { id: 'beauty', name: '变瘦变美', icon: 'wm-beauty', tab: true },
+    { id: 'status', name: '我的情况', icon: 'wm-status', tab: true },
+    { id: 'asset', name: '我的资产', icon: 'wm-asset', tab: true },
+    { id: 'travel', name: '我的旅行', icon: 'wm-travel', tab: false },
+    { id: 'yearly', name: '年度计划', icon: 'wm-yearly', tab: false },
+    { id: 'settings', name: '设置', icon: 'wm-gear', tab: false },
+  ];
   function showPanel(name) {
+    curPanel = name;
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    // 底部 tab 高亮
+    const tabHit = DRAWER_NAVS.find(n => n.id === name && n.tab);
+    document.querySelectorAll('.bnav-btn').forEach(b => b.classList.toggle('active', !!tabHit && b.dataset.page === name));
     const panel = document.getElementById('panel-' + name);
     if (panel) panel.classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    const nav = document.querySelector('.nav-item[data-panel="' + name + '"]');
-    if (nav) nav.classList.add('active');
+    // 底部 tab 高亮（tab 页面）
+    const isTabPage = DRAWER_NAVS.find(n => n.id === name && n.tab);
+    document.querySelectorAll('.bnav-btn').forEach(b => b.classList.toggle('active', isTabPage && b.dataset.page === name));
     // wanzi-mini 页面：渲染进面板
     if (HOME_PAGES[name] && window.HomePages) {
       const container = panel ? panel.querySelector('.home-page-root') : null;
@@ -59,6 +95,39 @@
       toast._t = setTimeout(() => toast.classList.remove('show'), 1500);
     }
   }
+
+  // 底部 tab 点击
+  function onTabClick(page) {
+    showPanel(page);
+    if (page === 'price') loadPriceFrame();
+  }
+  // 渲染抽屉菜单
+  function renderDrawer() {
+    const list = document.getElementById('drawerNavList');
+    if (!list) return;
+    list.innerHTML = DRAWER_NAVS.map(n =>
+      '<div class="drawer-nav-item ' + (curPanel === n.id ? 'active' : '') + '" data-nav="' + n.id + '">' +
+      '<img class="drawer-nav-icon" src="assets/' + n.icon + '.svg">' +
+      '<span class="drawer-nav-name">' + n.name + '</span>' +
+      '</div>').join('');
+    list.querySelectorAll('[data-nav]').forEach(item => {
+      item.addEventListener('click', () => {
+        closeDrawer();
+        showPanel(item.dataset.nav);
+        if (item.dataset.nav === 'price') loadPriceFrame();
+      });
+    });
+  }
+  function toggleDrawer() {
+    renderDrawer();
+    document.getElementById('drawerMask').classList.add('show');
+    document.getElementById('drawer').classList.add('open');
+  }
+  function closeDrawer() {
+    document.getElementById('drawerMask').classList.remove('show');
+    document.getElementById('drawer').classList.remove('open');
+  }
+  function goHome() { showPanel('index'); }
 
   // 导航点击：查询宝宝已激活时再点 = 全部收起/展开；否则正常切换
   function onNavClick(item) {
@@ -172,6 +241,14 @@
     initDrag();
     initFold();
     initTheme();
+    refreshQuote();
+    document.querySelectorAll('.bnav-btn').forEach(b => {
+      b.addEventListener('click', () => { showPanel(b.dataset.page); if (b.dataset.page === 'price') loadPriceFrame(); });
+    });
+    // 初始渲染默认页（小家）
+    showPanel(curPanel || 'index');
+    // AI 金句（有 key 时走 AI 更新当日金句）
+    try { window.HomePages && window.HomePages.initQuote && window.HomePages.initQuote(); } catch (e) {}
     document.querySelectorAll('.nav-item').forEach(item => {
       if (item.dataset.external) return;
       item.addEventListener('click', () => onNavClick(item));
@@ -251,4 +328,21 @@
 
   updateWsTime();
   setInterval(updateWsTime, 1000);
+
+  // 全局 UI 入口（wanzi-mini nav-bar 联动）
+  window.HomeUI = {
+    goHome() { showPanel('index'); },
+    switchTab(page) { showPanel(page); if (page === 'price') loadPriceFrame(); },
+    toggleDrawer, closeDrawer,
+    onCloud() { showPanel('settings'); },
+    onTheme() {
+      const themes = ['sakura', 'mint', 'lavender'];
+      const cur = document.body.dataset.theme || 'sakura';
+      const next = themes[(themes.indexOf(cur) + 1) % themes.length];
+      applyTheme(next);
+      toast('已切换主题');
+    },
+    onSettings() { showPanel('settings'); },
+  };
 })();
+
