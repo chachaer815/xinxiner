@@ -18,6 +18,22 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const nav = document.querySelector('.nav-item[data-panel="' + name + '"]');
     if (nav) nav.classList.add('active');
+    // 报价宝宝：隐藏面板里的 iframe 切到可见后需要强制重载才会渲染
+    if (name === 'price') {
+      const f = document.getElementById('priceFrame');
+      if (f) {
+        const src = f.getAttribute('data-src') || f.src;
+        // 移除再重建，强制浏览器渲染
+        const wrap = f.parentNode;
+        const fresh = document.createElement('iframe');
+        fresh.id = 'priceFrame';
+        fresh.className = 'price-frame';
+        fresh.title = '报价宝宝';
+        fresh.setAttribute('data-src', src);
+        fresh.src = src;
+        wrap.replaceChild(fresh, f);
+      }
+    }
   }
 
   // ===== 查询宝宝：点击导航 = 全部收起/展开（目录模式） =====
