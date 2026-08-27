@@ -389,6 +389,29 @@
       <div id="queueEmpty" class="hint" style="display:none;">暂无定时任务</div>
       <button class="btn btn-ghost btn-block" id="refreshQueueBtn">🔄 刷新队列</button>
     </div>
+    <!-- ⑤ 批量查重 -->
+    <div class="section"><div class="num">⑤</div><div class="t">批量查重</div></div>
+    <div class="card">
+      <div class="topbar"><div class="h2">批量查重</div><span class="status" id="dupStatus"></span></div>
+      <div class="hint" style="margin-top:0;">查重对象：<b id="dupShopName">当前店铺</b>。首次查询会拉取店铺全部产品索引（约几秒），之后秒查。</div>
+      <div class="label">型号列表（一行一个）</div>
+      <textarea id="dupInput" class="input" placeholder="一行一个型号，例如：
+1746-A10
+1756-L61
+2711P-T10C4" style="min-height:120px;"></textarea>
+      <div class="label">查重模式</div>
+      <div class="row" style="gap:8px;flex-wrap:wrap;">
+        <label class="checkline" style="margin-bottom:0;"><input type="radio" name="dupMode" value="sku" checked> SKU 完全一致</label>
+        <label class="checkline" style="margin-bottom:0;"><input type="radio" name="dupMode" value="title"> 标题包含</label>
+        <label class="checkline" style="margin-bottom:0;"><input type="radio" name="dupMode" value="both"> SKU+标题同时命中</label>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <button class="btn btn-primary" style="flex:1;" id="dupRunBtn">🔍 开始查重</button>
+        <button class="btn btn-ghost" id="dupRefreshBtn">🔄 刷新索引</button>
+      </div>
+      <div class="progress" id="dupProgress" style="display:none; margin-top:12px;"><div class="spin"></div><span id="dupProgressText"></span></div>
+      <div id="dupResult" style="margin-top:12px;"></div>
+    </div>
     </div><!-- /panel-publish -->
 
 <!-- 查询宝宝 -->
