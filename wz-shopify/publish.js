@@ -271,9 +271,15 @@
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
     // ===== 云函数封装 =====
+    function getCloudKey() { try { return localStorage.getItem('wz_cloud_key') || ''; } catch (e) { return ''; } }
     async function callCloud(action, data = {}) {
-      const res = await app.callFunction({ name: 'wz-shopify', data: { action, ...data } });
-      if (res.result && res.result.ok === false) { throw new Error(res.result.error || '操作失败'); }
+      let k = getCloudKey();
+      if (!k) { k = prompt('请输入访问口令（首次输入后会记住）') || ''; if (k) { try { localStorage.setItem('wz_cloud_key', k); } catch (e) {} } }
+      const res = await app.callFunction({ name: 'wz-shopify', data: { auth: k, action, ...data } });
+      if (res.result && res.result.ok === false) {
+        if (/口令/.test(res.result.error || '')) { try { localStorage.removeItem('wz_cloud_key'); } catch (e) {} }
+        throw new Error(res.result.error || '操作失败');
+      }
       return res.result;
     }
     async function gql(query, variables, key) {
