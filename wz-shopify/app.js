@@ -87,6 +87,7 @@
 
   function initDrag() {
     document.querySelectorAll('.nav-item').forEach(item => {
+      if (item.dataset.external) return;
       item.setAttribute('draggable', 'true');
       item.addEventListener('dragstart', (e) => {
         draggedItem = item;
@@ -165,6 +166,7 @@
     initTheme();
     initPlan();
     document.querySelectorAll('.nav-item').forEach(item => {
+      if (item.dataset.external) return;
       item.addEventListener('click', () => onNavClick(item));
     });
   });
