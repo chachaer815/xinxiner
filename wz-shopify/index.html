@@ -31,6 +31,10 @@
         <span class="nav-icon">🔍</span>
         <span class="nav-label">查询宝宝</span>
       </div>
+      <div class="nav-item" data-panel="price" title="CozyPrice 报价">
+        <span class="nav-icon">💰</span>
+        <span class="nav-label">报价</span>
+      </div>
       <div class="nav-item" data-panel="more" title="更多">
         <span class="nav-icon">✨</span>
         <span class="nav-label">更多</span>
@@ -556,6 +560,13 @@
         <div class="hint">这里会陆续加入丸子的新模块。<br>有想法随时告诉人家～</div>
       </div>
     </div>
+
+    <!-- CozyPrice 报价 -->
+    <div class="panel" id="panel-price">
+      <div class="price-frame-wrap">
+        <iframe id="priceFrame" class="price-frame" src="about:blank" title="CozyPrice 报价查询" loading="lazy"></iframe>
+      </div>
+    </div>
   </main>
   </div>
 
@@ -612,6 +623,16 @@
   <script>
     (function(){
       const NAV_KEY = 'wz_nav_order_v1';
+
+      // CozyPrice iframe 懒加载
+      const PRICE_SRC = './baojia-query/';
+      let priceLoaded = false;
+      function loadPriceFrame(){
+        if(priceLoaded) return;
+        priceLoaded = true;
+        const f = document.getElementById('priceFrame');
+        if(f) f.src = PRICE_SRC;
+      }
       let draggedItem = null;
 
       function showPanel(name){
@@ -621,6 +642,7 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         const nav = document.querySelector('.nav-item[data-panel="' + name + '"]');
         if(nav) nav.classList.add('active');
+        if(name === 'price') loadPriceFrame();
       }
 
       // ===== 拖拽排序 =====
@@ -725,7 +747,10 @@
       });
 
       document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', () => showPanel(item.dataset.panel));
+        item.addEventListener('click', () => {
+          showPanel(item.dataset.panel);
+          if(item.dataset.panel === 'price') loadPriceFrame();
+        });
       });
 
       updateWsTime();
