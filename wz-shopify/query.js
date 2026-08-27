@@ -418,7 +418,7 @@
     const input = $('pkgInput').value.trim();
     const r = $('pkgResult');
     if (!input) { r.innerHTML = '<div class="q-error">请输入产品信息～</div>'; return; }
-    r.innerHTML = '<div class="q-loading">🤖 AI 正在计算装箱方案...</div>';
+    r.innerHTML = '<div class="q-loading">📦 正在计算装箱方案...</div>';
     const apiUrl = SUPABASE_URL + '/functions/v1/packaging-ai';
     fetch(apiUrl, {
       method: 'POST',
