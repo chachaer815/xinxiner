@@ -6,75 +6,44 @@
   <title>丸子の工作宝宝</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23ffb7d2'/%3E%3Ccircle cx='32' cy='32' r='24' fill='%23fffdf8'/%3E%3Ctext x='32' y='44' font-size='30' text-anchor='middle'%3E%F0%9F%8E%90%3C/text%3E%3C/svg%3E" />
   <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.32.0/cloudbase.full.js"></script>
-  <link rel="stylesheet" href="style.css?v=20260827l">
-  <link rel="stylesheet" href="query.css?v=20260827e">
+  <link rel="stylesheet" href="style.css?v=20260826f">
+  <link rel="stylesheet" href="query.css?v=20260827c">
+  <link rel="stylesheet" href="beauty.css?v=20260827c">
 </head>
 <body>
   <div class="workspace" id="app">
     <!-- 顶部栏 -->
     <div class="topbar-ws">
-      <div class="nav-inner">
-        <div class="nav-logo">
-          <img class="nav-logo-img" src="assets/wm-logo.svg" alt="logo">
-          <div class="nav-title">丸子の工作宝宝</div>
-        </div>
-        <div class="nav-right">
-          <div class="nav-quote-zh" id="navQuoteZh">今天也要元气满满</div>
-          <div class="nav-quote-en" id="navQuoteEn">Stay sweet</div>
-        </div>
-        <div class="ws-time" id="wsTime">--:--</div>
-      </div>
+      <div class="ws-brand">🎐 丸子の工作宝宝</div>
+      <div class="ws-time" id="wsTime">--:--</div>
     </div>
 
-
-    <!-- 左侧菜单栏 -->
+    <!-- 左侧导航 -->
     <nav class="sidebar">
       <div class="nav-item active" data-panel="publish" title="发品宝宝">
-        <img class="nav-icon-img" src="assets/publish.svg" alt="发品宝宝">
+        <img class="nav-icon-img" src="icon-robot.png" alt="发品宝宝">
         <span class="nav-label">发品宝宝</span>
       </div>
-      <div class="nav-item" data-panel="todo" title="计划宝宝">
-        <img class="nav-icon-img" src="assets/wm-plan.svg" alt="计划宝宝">
-        <span class="nav-label">计划宝宝</span>
-      </div>
+
       <div class="nav-item" data-panel="query" title="查询宝宝">
-        <img class="nav-icon-img" src="assets/query.svg" alt="查询宝宝">
+        <img class="nav-icon-img" src="icon-tool.png" alt="查询宝宝">
         <span class="nav-label">查询宝宝</span>
       </div>
       <div class="nav-item" data-panel="price" title="报价宝宝">
-        <img class="nav-icon-img" src="assets/price.svg" alt="报价宝宝">
+        <img class="nav-icon-img" src="icon-logo.png" alt="报价宝宝">
         <span class="nav-label">报价宝宝</span>
       </div>
       <div class="nav-item" data-panel="beauty" title="变美宝宝">
         <img class="nav-icon-img" src="assets/wm-beauty.svg" alt="变美宝宝">
         <span class="nav-label">变美宝宝</span>
       </div>
-      <div class="nav-item" data-panel="status" title="情况宝宝">
-        <img class="nav-icon-img" src="assets/wm-status.svg" alt="情况宝宝">
-        <span class="nav-label">情况宝宝</span>
-      </div>
-      <div class="nav-item" data-panel="asset" title="资产宝宝">
-        <img class="nav-icon-img" src="assets/wm-asset.svg" alt="资产宝宝">
-        <span class="nav-label">资产宝宝</span>
-      </div>
-      <div class="nav-item" data-panel="travel" title="旅行宝宝">
-        <img class="nav-icon-img" src="assets/wm-travel.svg" alt="旅行宝宝">
-        <span class="nav-label">旅行宝宝</span>
-      </div>
-      <div class="nav-item" data-panel="yearly" title="年度宝宝">
-        <img class="nav-icon-img" src="assets/wm-yearly.svg" alt="年度宝宝">
-        <span class="nav-label">年度宝宝</span>
-      </div>
       <div class="nav-item" data-panel="more" title="更多">
-        <img class="nav-icon-img" src="assets/more.svg" alt="更多">
+        <span class="nav-icon">✨</span>
         <span class="nav-label">更多</span>
-      </div>
-      <div class="nav-item" data-panel="settings" title="设置">
-        <img class="nav-icon-img" src="assets/wm-gear.svg" alt="设置">
-        <span class="nav-label">设置</span>
       </div>
     </nav>
 
+    <!-- 右侧主内容 -->
     <main class="main">
     <div id="draftBanner" class="draft-banner" style="display:none;">
       <span>📝 上次有未完成的发品草稿</span>
@@ -82,7 +51,7 @@
     </div>
 
     <!-- ① Shopify 发品 -->
-    <div class="panel" id="panel-publish">
+    <div class="panel active" id="panel-publish">
     <div class="section"><div class="num">①</div><div class="t">店铺与令牌</div></div>
     <div class="card">
       <div class="shop-head" id="shopToggle">
@@ -598,20 +567,6 @@
     <!-- 每日计划 -->
     <!-- 变美宝宝 -->
     <div class="panel" id="panel-beauty"><div class="home-page-root"></div></div>
-    <!-- 情况宝宝 -->
-    <div class="panel" id="panel-status"><div class="home-page-root"></div></div>
-    <!-- 资产宝宝 -->
-    <div class="panel" id="panel-asset"><div class="home-page-root"></div></div>
-    <!-- 旅行宝宝 -->
-    <div class="panel" id="panel-travel"><div class="home-page-root"></div></div>
-    <!-- 年度宝宝 -->
-    <div class="panel" id="panel-yearly"><div class="home-page-root"></div></div>
-
-    <!-- 计划宝宝（wanzi-mini 每日计划） -->
-    <div class="panel" id="panel-todo"><div class="home-page-root"></div></div>
-
-    <!-- 设置 -->
-    <div class="panel" id="panel-settings"><div class="home-page-root"></div></div>
 
     <!-- 更多 -->
     <div class="panel" id="panel-more">
@@ -687,18 +642,10 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="home-core.js?v=20260827b"></script>
-  <script src="home-pages.js?v=20260827b"></script>
-  <script src="app.js?v=20260827l"></script>
-  <script src="tz-data.js?v=20260827e"></script>
-  <script src="query.js?v=20260827e"></script>
-  <script src="publish.js?v=20260827e"></script>
-
-
-
-
-
-
-
+  <script src="app.js?v=20260827b"></script>
+  <script src="tz-data.js?v=20260827c"></script>
+  <script src="query.js?v=20260827d"></script>
+  <script src="beauty-page.js?v=20260827c"></script>
+  <script src="publish.js?v=20260827c"></script>
 </body>
 </html>
