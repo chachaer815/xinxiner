@@ -395,7 +395,7 @@
       <div class="topbar"><div class="h2">批量查重</div><span class="status" id="dupStatus"></span></div>
       <div class="hint" style="margin-top:0;">查重对象：<b id="dupShopName">当前店铺</b>。首次查询会拉取店铺全部产品索引（约几秒），之后秒查。</div>
       <div class="label">型号列表（一行一个）</div>
-      <textarea id="dupInput" class="input" placeholder="一行一个型号" style="min-height:120px;"></textarea>
+      <textarea id="dupInput" class="input" style="min-height:120px;"></textarea>
       <div class="label">查重模式</div>
       <div class="row" style="gap:8px;flex-wrap:wrap;">
         <label class="checkline" style="margin-bottom:0;"><input type="radio" name="dupMode" value="sku" checked> SKU 完全一致</label>
@@ -528,15 +528,9 @@
 
     <!-- 包装预估 -->
     <div id="lg-packaging" style="display:none;margin-top:12px;">
-      <textarea id="pkgInput" class="input" placeholder="输入产品信息，例如：
-15×12×10cm，0.5kg，100个
-
-也可以多行输入多款产品：
-产品A：20×15×10cm，1.2kg，50个
-产品B：30×20×15cm，2.5kg，30个" style="min-height:100px;"></textarea>
+      <textarea id="pkgInput" class="input" style="min-height:100px;"></textarea>
       <button class="btn btn-primary btn-block" style="margin-top:10px;" onclick="queryBaby.estimatePackaging()">🤖 AI 计算装箱</button>
       <div id="pkgResult" style="margin-top:10px;"></div>
-      <div class="hint">AI 由火山引擎提供，密钥安全存放在服务端，不出现在网页代码中。</div>
     </div>
   </div>
 
@@ -545,9 +539,9 @@
     <div class="section q-toggle"><div class="num">🔗</div><div class="t">链接抓取</div><span class="q-fold-arrow">▼</span></div>
     <div class="card">
     <div class="label">Shopify 店铺网址</div>
-    <input type="text" id="lfStoreUrl" class="input" placeholder="https://www.xxx">
+    <input type="text" id="lfStoreUrl" class="input">
     <div class="label">型号列表（一行一个）</div>
-    <textarea id="lfInput" class="input" placeholder="一行一个型号" style="min-height:110px;font-family:Consolas,monospace;"></textarea>
+    <textarea id="lfInput" class="input" style="min-height:110px;font-family:Consolas,monospace;"></textarea>
     <div class="row" style="margin-top:10px;">
       <button class="btn btn-primary" style="flex:1;" onclick="queryBaby.linkFetcherSearch()">🔎 查找</button>
       <button class="btn btn-ghost" onclick="queryBaby.linkFetcherClear()">✕ 清空</button>
