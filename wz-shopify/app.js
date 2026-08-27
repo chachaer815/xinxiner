@@ -11,6 +11,8 @@
   let draggedItem = null;
 
   // ===== 面板切换 =====
+  // wanzi-mini 页面映射
+  const HOME_PAGES = { beauty: 'beauty', status: 'status', asset: 'asset', travel: 'travel', yearly: 'yearly', todo: 'plan' };
   function showPanel(name) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     const panel = document.getElementById('panel-' + name);
@@ -18,6 +20,11 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const nav = document.querySelector('.nav-item[data-panel="' + name + '"]');
     if (nav) nav.classList.add('active');
+    // wanzi-mini 页面：渲染进面板
+    if (HOME_PAGES[name] && window.HomePages) {
+      const container = panel ? panel.querySelector('.home-page-root') : null;
+      if (container) window.HomePages.render(HOME_PAGES[name], container);
+    }
     // 报价宝宝：隐藏面板里的 iframe 切到可见后需要强制重载才会渲染
     if (name === 'price') {
       const f = document.getElementById('priceFrame');
@@ -160,11 +167,11 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    if (window.HomeApp) window.HomeApp.loadStore();
     loadOrder();
     initDrag();
     initFold();
     initTheme();
-    initPlan();
     document.querySelectorAll('.nav-item').forEach(item => {
       if (item.dataset.external) return;
       item.addEventListener('click', () => onNavClick(item));
@@ -231,78 +238,17 @@
     try { localStorage.setItem(PLAN_KEY + ':' + dateStr, JSON.stringify(plans)); } catch (e) {}
   }
 
-  function initPlan() {
-    const input = document.getElementById('planInput');
-    const addBtn = document.getElementById('planAddBtn');
-    const prevBtn = document.getElementById('planPrev');
-    const nextBtn = document.getElementById('planNext');
-    const todayBtn = document.getElementById('planToday');
-    if (!input || !addBtn) return;
-    const doAdd = () => {
-      const text = input.value.trim();
-      if (!text) { toast('写下要做的事～'); return; }
-      const plans = getPlans(planDate);
-      plans.push({ id: Date.now(), text, done: false, time: '' });
-      savePlans(planDate, plans);
-      input.value = '';
-      renderPlan();
-    };
-    addBtn.addEventListener('click', doAdd);
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); });
-    prevBtn.addEventListener('click', () => { planDate = addDays(planDate, -1); renderPlan(); });
-    nextBtn.addEventListener('click', () => { planDate = addDays(planDate, 1); renderPlan(); });
-    todayBtn.addEventListener('click', () => { planDate = todayStr(); renderPlan(); });
-    document.querySelectorAll('.plan-filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        planFilter = btn.dataset.filter;
-        document.querySelectorAll('.plan-filter-btn').forEach(b => b.classList.toggle('active', b === btn));
-        renderPlan();
-      });
-    });
-    renderPlan();
+  function initPlan() {}
+
+  function renderPlan() {}
+
+  function updateWsTime() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const el = document.getElementById('wsTime');
+    if (el) el.textContent = pad(now.getHours()) + ':' + pad(now.getMinutes());
   }
 
-  function renderPlan() {
-    const label = document.getElementById('planDateLabel');
-    if (label) label.textContent = fmtDateLabel(planDate);
-    const all = getPlans(planDate);
-    const done = all.filter(p => p.done).length;
-    const wrap = document.getElementById('planProgressWrap');
-    if (wrap) wrap.style.display = all.length ? 'flex' : 'none';
-    const fill = document.getElementById('planProgressFill');
-    if (fill) fill.style.width = all.length ? Math.round(done / all.length * 100) + '%' : '0%';
-    const ptext = document.getElementById('planProgressText');
-    if (ptext) ptext.textContent = done + '/' + all.length;
-
-    const list = all.filter(p => planFilter === 'all' ? true : planFilter === 'done' ? p.done : !p.done);
-    const listEl = document.getElementById('planList');
-    const emptyEl = document.getElementById('planEmpty');
-    if (!listEl) return;
-    if (!list.length) {
-      listEl.innerHTML = '';
-      if (emptyEl) emptyEl.style.display = 'block';
-      return;
-    }
-    if (emptyEl) emptyEl.style.display = 'none';
-    listEl.innerHTML = list.map(p => {
-      const t = p.time ? '<span class="plan-time">🕐 ' + esc(p.time) + '</span>' : '';
-      return '<div class="plan-item ' + (p.done ? 'done' : '') + '" data-id="' + p.id + '">' +
-        '<div class="plan-check" data-act="toggle">' + (p.done ? '✓' : '') + '</div>' +
-        '<div class="plan-text">' + esc(p.text) + '</div>' + t +
-        '<button class="plan-del" data-act="del">✕</button>' +
-        '</div>';
-    }).join('');
-    listEl.querySelectorAll('.plan-item').forEach(item => {
-      const id = Number(item.dataset.id);
-      item.querySelector('[data-act="toggle"]').addEventListener('click', () => {
-        const plans = getPlans(planDate);
-        const p = plans.find(x => x.id === id);
-        if (p) { p.done = !p.done; savePlans(planDate, plans); renderPlan(); }
-      });
-      item.querySelector('[data-act="del"]').addEventListener('click', () => {
-        const plans = getPlans(planDate).filter(x => x.id !== id);
-        savePlans(planDate, plans); renderPlan();
-      });
-    });
-  }
+  updateWsTime();
+  setInterval(updateWsTime, 1000);
 })();
