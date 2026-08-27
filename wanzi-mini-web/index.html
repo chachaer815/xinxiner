@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>丸子の小家</title>
+  <link rel="icon" href="icons/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="home.css">
+</head>
+<body data-theme="sakura">
+  <!-- 顶部导航（复刻 wanzi-mini nav-bar） -->
+  <div class="nav-bar" id="navBar">
+    <div class="nav-inner">
+      <div class="nav-logo" onclick="HomeUI.goHome()">
+        <img class="nav-logo-img" src="icons/logo.svg" alt="logo">
+        <text class="nav-title" id="navTitle">丸子の小家</text>
+      </div>
+      <div class="nav-right">
+        <div class="nav-quote-zh" id="navQuoteZh"></div>
+        <div class="nav-quote-en" id="navQuoteEn"></div>
+      </div>
+      <div class="nav-menu-btn" onclick="HomeUI.toggleDrawer()">
+        <img class="nav-menu-img" src="icons/gear.svg" alt="menu">
+      </div>
+    </div>
+  </div>
+  <div class="nav-placeholder" id="navPlaceholder"></div>
+
+  <!-- 抽屉全菜单 -->
+  <div class="nav-drawer-mask" id="drawerMask" onclick="HomeUI.closeDrawer()">
+    <div class="nav-drawer" id="drawer" onclick="event.stopPropagation()">
+      <div class="drawer-head">
+        <img class="drawer-logo" src="icons/logo.svg" alt="logo">
+        <div class="drawer-head-text">
+          <div class="drawer-name" id="drawerName">丸子の小家</div>
+          <div class="drawer-sub">MY SWEET HOME</div>
+        </div>
+      </div>
+      <div class="drawer-nav-list" id="drawerNavList"></div>
+      <div class="drawer-foot">
+        <div class="drawer-foot-btn" onclick="HomeUI.onTheme()">
+          <img class="dfb-icon" src="icons/palette.svg" alt="theme"><text>换皮肤</text>
+        </div>
+        <div class="drawer-foot-btn" onclick="HomeUI.onSettings()">
+          <img class="dfb-icon" src="icons/gear.svg" alt="set"><text>设置</text>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 页面容器 -->
+  <div class="page-root">
+    <div class="page-body" id="pageBody"></div>
+  </div>
+
+  <!-- 底部 TabBar（复刻 wanzi-mini 5 tab） -->
+  <div class="bottom-nav" id="bottomNav">
+    <div class="bnav-btn active" data-page="index" onclick="HomeUI.switchTab('index')">
+      <img class="bnav-icon" src="tab/home.png" alt="小家"><div class="bnav-label">小家</div>
+    </div>
+    <div class="bnav-btn" data-page="plan" onclick="HomeUI.switchTab('plan')">
+      <img class="bnav-icon" src="tab/plan.png" alt="计划"><div class="bnav-label">计划</div>
+    </div>
+    <div class="bnav-btn" data-page="beauty" onclick="HomeUI.switchTab('beauty')">
+      <img class="bnav-icon" src="tab/beauty.png" alt="变美"><div class="bnav-label">变美</div>
+    </div>
+    <div class="bnav-btn" data-page="asset" onclick="HomeUI.switchTab('asset')">
+      <img class="bnav-icon" src="tab/asset.png" alt="资产"><div class="bnav-label">资产</div>
+    </div>
+    <div class="bnav-btn" data-page="status" onclick="HomeUI.switchTab('status')">
+      <img class="bnav-icon" src="tab/status.png" alt="情况"><div class="bnav-label">情况</div>
+    </div>
+  </div>
+
+  <!-- 确认弹窗 -->
+  <div class="modal-confirm" id="modalConfirm">
+    <div class="mc-box">
+      <div class="mc-title"></div>
+      <div class="mc-content"></div>
+      <div class="mc-actions">
+        <button class="btn sm ghost mc-cancel">取消</button>
+        <button class="btn sm primary mc-ok">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="core.js"></script>
+  <script src="app-web.js"></script>
+
+
+
+</body>
+</html>
