@@ -539,6 +539,17 @@
     document.querySelectorAll('.logistics-card').forEach(c => {
       c.classList.toggle('active', (c.getAttribute('data-tool') || '') === tool);
     });
+    // 若物流版块被折叠则自动展开
+    const block = document.querySelector('.q-block[data-id="logistics"]');
+    if (block && block.classList.contains('folded')) {
+      block.classList.remove('folded');
+      try {
+        const folded = JSON.parse(localStorage.getItem('wz_query_fold_v1') || '[]');
+        const idx = folded.indexOf('logistics');
+        if (idx !== -1) folded.splice(idx, 1);
+        localStorage.setItem('wz_query_fold_v1', JSON.stringify(folded));
+      } catch(e){}
+    }
   }
 
   // ============================================================

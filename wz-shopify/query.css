@@ -129,3 +129,32 @@
 .success-icon { font-size: 42px; }
 .success-text { font-size: 18px; font-weight: 700; margin-top: 8px; color: var(--ink); }
 .success-model { font-size: 14px; color: var(--purple-d); margin-top: 6px; word-break: break-all; }
+
+/* ===== 查询宝宝：版块折叠 ===== */
+.q-toggle { cursor: pointer; user-select: none; }
+.q-toggle:active { opacity: 0.7; }
+.q-fold-arrow {
+  margin-left: auto; font-size: 12px; color: var(--purple-d);
+  transition: transform .2s; flex-shrink: 0;
+}
+.q-block.folded .q-fold-arrow { transform: rotate(-90deg); }
+.q-block.folded > .card { display: none; }
+.q-block > .card { transition: opacity .15s; }
+
+/* ===== 侧边栏拖拽排序 ===== */
+.nav-item { position: relative; }
+.nav-item[draggable="true"] { cursor: grab; }
+.nav-item[draggable="true"]:active { cursor: grabbing; }
+.nav-item.dragging {
+  opacity: 0.45; transform: scale(0.96);
+  border-style: dashed; border-color: var(--pink-d);
+}
+.nav-item.drop-before::before,
+.nav-item.drop-after::after {
+  content: ""; position: absolute; left: 10%; right: 10%;
+  height: 3px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--pink-d), var(--purple-d));
+  box-shadow: 0 0 6px rgba(255, 143, 192, 0.6);
+}
+.nav-item.drop-before::before { top: -5px; }
+.nav-item.drop-after::after { bottom: -5px; }
