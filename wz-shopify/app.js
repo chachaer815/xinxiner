@@ -8,16 +8,6 @@
   const NAV_KEY = 'wz_nav_order_v1';
   const FOLD_KEY = 'wz_query_fold_v1';
 
-  // CozyPrice iframe 懒加载（报价面板）
-  const PRICE_SRC = '../baojia-query/';
-  let priceLoaded = false;
-  function loadPriceFrame() {
-    if (priceLoaded) return;
-    priceLoaded = true;
-    const f = document.getElementById('priceFrame');
-    if (f) f.src = PRICE_SRC;
-  }
-
   let draggedItem = null;
 
   // ===== 面板切换 =====
@@ -28,7 +18,6 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const nav = document.querySelector('.nav-item[data-panel="' + name + '"]');
     if (nav) nav.classList.add('active');
-    if (name === 'price') loadPriceFrame();
   }
 
   // ===== 查询宝宝：点击导航 = 全部收起/展开（目录模式） =====
@@ -56,7 +45,6 @@
       return;
     }
     showPanel(name);
-    if (name === 'price') loadPriceFrame();
   }
 
   // ===== 拖拽排序 =====
