@@ -149,6 +149,7 @@
       const saved = JSON.parse(localStorage.getItem(NAV_KEY) || '[]');
       if (!Array.isArray(saved) || saved.length < 2) return;
       const sidebar = document.querySelector('.sidebar');
+      if (!sidebar) { try { localStorage.removeItem(NAV_KEY); } catch (e) {} return; }
       const items = {};
       document.querySelectorAll('.nav-item').forEach(n => items[n.dataset.panel] = n);
       let last = null;
@@ -162,7 +163,9 @@
   }
 
   function initDrag() {
-    document.querySelectorAll('.nav-item').forEach(item => {
+    const navItems = document.querySelectorAll('.nav-item');
+    if (!navItems.length) return;
+    navItems.forEach(item => {
       if (item.dataset.external) return;
       item.setAttribute('draggable', 'true');
       item.addEventListener('dragstart', (e) => {
@@ -242,17 +245,14 @@
     initFold();
     initTheme();
     refreshQuote();
-    document.querySelectorAll('.bnav-btn').forEach(b => {
-      b.addEventListener('click', () => { showPanel(b.dataset.page); if (b.dataset.page === 'price') loadPriceFrame(); });
-    });
-    // 初始渲染默认页（小家）
-    showPanel(curPanel || 'index');
-    // AI 金句（有 key 时走 AI 更新当日金句）
-    try { window.HomePages && window.HomePages.initQuote && window.HomePages.initQuote(); } catch (e) {}
     document.querySelectorAll('.nav-item').forEach(item => {
       if (item.dataset.external) return;
       item.addEventListener('click', () => onNavClick(item));
     });
+    // 默认渲染发品宝宝
+    showPanel('publish');
+    // AI 金句（有 key 时走 AI 更新当日金句）
+    try { window.HomePages && window.HomePages.initQuote && window.HomePages.initQuote(); } catch (e) {}
   });
 
   updateWsTime();
@@ -329,11 +329,8 @@
   updateWsTime();
   setInterval(updateWsTime, 1000);
 
-  // 全局 UI 入口（wanzi-mini nav-bar 联动）
+  // 全局 UI 入口
   window.HomeUI = {
-    goHome() { showPanel('index'); },
-    switchTab(page) { showPanel(page); if (page === 'price') loadPriceFrame(); },
-    toggleDrawer, closeDrawer,
     onCloud() { showPanel('settings'); },
     onTheme() {
       const themes = ['sakura', 'mint', 'lavender'];
