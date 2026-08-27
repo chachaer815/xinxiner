@@ -6,73 +6,73 @@
   <title>丸子の工作宝宝</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23ffb7d2'/%3E%3Ccircle cx='32' cy='32' r='24' fill='%23fffdf8'/%3E%3Ctext x='32' y='44' font-size='30' text-anchor='middle'%3E%F0%9F%8E%90%3C/text%3E%3C/svg%3E" />
   <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.32.0/cloudbase.full.js"></script>
-  <link rel="stylesheet" href="style.css?v=20260827j">
+  <link rel="stylesheet" href="style.css?v=20260827k">
   <link rel="stylesheet" href="query.css?v=20260827e">
 </head>
 <body>
   <div class="workspace" id="app">
-    <!-- 顶部栏 -->
-    <div class="topbar-ws">
+    <!-- 顶部 nav-bar（wanzi-mini 原版） -->
+    <div class="nav-bar">
       <div class="nav-inner">
-        <div class="nav-logo">
-          <img class="nav-logo-img" src="assets/logo.svg" alt="logo">
-          <div class="nav-title">丸子の工作宝宝</div>
+        <div class="nav-logo" onclick="HomeUI.goHome()">
+          <img class="nav-logo-img" src="assets/wm-logo.svg" alt="logo">
+          <div class="nav-title" id="navTitle">丸子の工作宝宝</div>
         </div>
         <div class="nav-right">
-          <div class="nav-sub">MY SWEET WORKSPACE</div>
+          <div class="nav-quote-zh" id="navQuoteZh">今天也要元气满满</div>
+          <div class="nav-quote-en" id="navQuoteEn">Stay sweet</div>
         </div>
-        <div class="theme-switch" id="themeSwitch" title="切换主题">
-          <div class="theme-dot sakura" data-theme="sakura" title="樱花"></div>
-          <div class="theme-dot mint" data-theme="mint" title="薄荷"></div>
-          <div class="theme-dot lavender" data-theme="lavender" title="薰衣草"></div>
+        <div class="nav-menu-btn" onclick="HomeUI.toggleDrawer()">
+          <img class="nav-menu-img" src="assets/wm-gear.svg" alt="menu">
         </div>
-        <div class="ws-time" id="wsTime">--:--</div>
       </div>
     </div>
+    <div class="nav-placeholder"></div>
 
-    <!-- 左侧导航 -->
-    <nav class="sidebar">
-      <div class="nav-item active" data-panel="publish" title="发品宝宝">
-        <img class="nav-icon-img" src="assets/publish.svg" alt="发品宝宝">
-        <span class="nav-label">发品宝宝</span>
+    <!-- 抽屉全菜单（wanzi-mini 原版） -->
+    <div class="nav-drawer-mask" id="drawerMask" onclick="HomeUI.closeDrawer()">
+      <div class="nav-drawer" id="drawer" onclick="event.stopPropagation()">
+        <div class="drawer-head">
+          <img class="drawer-logo" src="assets/wm-logo.svg" alt="logo">
+          <div class="drawer-head-text">
+            <div class="drawer-name" id="drawerName">丸子の工作宝宝</div>
+            <div class="drawer-sub">MY SWEET HOME</div>
+          </div>
+        </div>
+        <div class="drawer-nav-list" id="drawerNavList"></div>
+        <div class="drawer-foot">
+          <div class="drawer-foot-btn" onclick="HomeUI.onCloud()">
+            <img class="dfb-icon" src="assets/wm-cloud.svg" alt="cloud"><text>云同步</text>
+          </div>
+          <div class="drawer-foot-btn" onclick="HomeUI.onTheme()">
+            <img class="dfb-icon" src="assets/wm-palette.svg" alt="theme"><text>换皮肤</text>
+          </div>
+          <div class="drawer-foot-btn" onclick="HomeUI.onSettings()">
+            <img class="dfb-icon" src="assets/wm-gear.svg" alt="set"><text>设置</text>
+          </div>
+        </div>
       </div>
-      <div class="nav-item" data-panel="todo" title="计划宝宝">
-        <img class="nav-icon-img" src="assets/plan.svg" alt="计划宝宝">
-        <span class="nav-label">计划宝宝</span>
-      </div>
-      <div class="nav-item" data-panel="query" title="查询宝宝">
-        <img class="nav-icon-img" src="assets/query.svg" alt="查询宝宝">
-        <span class="nav-label">查询宝宝</span>
-      </div>
-      <div class="nav-item" data-panel="price" title="报价宝宝">
-        <img class="nav-icon-img" src="assets/price.svg" alt="报价宝宝">
-        <span class="nav-label">报价宝宝</span>
-      </div>
-      <div class="nav-item" data-panel="beauty" title="变美宝宝">
-        <img class="nav-icon-img" src="assets/wm-beauty.svg" alt="变美宝宝">
-        <span class="nav-label">变美宝宝</span>
-      </div>
-      <div class="nav-item" data-panel="status" title="情况宝宝">
-        <img class="nav-icon-img" src="assets/wm-status.svg" alt="情况宝宝">
-        <span class="nav-label">情况宝宝</span>
-      </div>
-      <div class="nav-item" data-panel="asset" title="资产宝宝">
-        <img class="nav-icon-img" src="assets/wm-asset.svg" alt="资产宝宝">
-        <span class="nav-label">资产宝宝</span>
-      </div>
-      <div class="nav-item" data-panel="travel" title="旅行宝宝">
-        <img class="nav-icon-img" src="assets/wm-travel.svg" alt="旅行宝宝">
-        <span class="nav-label">旅行宝宝</span>
-      </div>
-      <div class="nav-item" data-panel="yearly" title="年度宝宝">
-        <img class="nav-icon-img" src="assets/wm-yearly.svg" alt="年度宝宝">
-        <span class="nav-label">年度宝宝</span>
-      </div>
-      <div class="nav-item" data-panel="more" title="更多">
-        <img class="nav-icon-img" src="assets/more.svg" alt="更多">
-        <span class="nav-label">更多</span>
-      </div>
+    </div>
     </nav>
+
+    <!-- 底部 5 窄 tab（wanzi-mini 原版） -->
+    <div class="bottom-nav" id="bottomNav">
+      <div class="bnav-btn active" data-page="index" onclick="HomeUI.switchTab('index')">
+        <img class="bnav-icon" src="tab/home.png" alt="小家"><div class="bnav-label">小家</div>
+      </div>
+      <div class="bnav-btn" data-page="plan" onclick="HomeUI.switchTab('plan')">
+        <img class="bnav-icon" src="tab/plan.png" alt="计划"><div class="bnav-label">计划</div>
+      </div>
+      <div class="bnav-btn" data-page="beauty" onclick="HomeUI.switchTab('beauty')">
+        <img class="bnav-icon" src="tab/beauty.png" alt="变美"><div class="bnav-label">变美</div>
+      </div>
+      <div class="bnav-btn" data-page="asset" onclick="HomeUI.switchTab('asset')">
+        <img class="bnav-icon" src="tab/asset.png" alt="资产"><div class="bnav-label">资产</div>
+      </div>
+      <div class="bnav-btn" data-page="status" onclick="HomeUI.switchTab('status')">
+        <img class="bnav-icon" src="tab/status.png" alt="情况"><div class="bnav-label">情况</div>
+      </div>
+    </div>
 
     <!-- 右侧主内容 -->
     <main class="main">
@@ -82,7 +82,7 @@
     </div>
 
     <!-- ① Shopify 发品 -->
-    <div class="panel active" id="panel-publish">
+    <div class="panel" id="panel-publish">
     <div class="section"><div class="num">①</div><div class="t">店铺与令牌</div></div>
     <div class="card">
       <div class="shop-head" id="shopToggle">
@@ -610,6 +610,12 @@
     <!-- 计划宝宝（wanzi-mini 每日计划） -->
     <div class="panel" id="panel-todo"><div class="home-page-root"></div></div>
 
+    <!-- 小家首页 -->
+    <div class="panel active" id="panel-index"><div class="home-page-root"></div></div>
+
+    <!-- 设置 -->
+    <div class="panel" id="panel-settings"><div class="home-page-root"></div></div>
+
     <!-- 更多 -->
     <div class="panel" id="panel-more">
       <div class="card">
@@ -684,9 +690,9 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="home-core.js?v=20260827a"></script>
-  <script src="home-pages.js?v=20260827a"></script>
-  <script src="app.js?v=20260827j"></script>
+  <script src="home-core.js?v=20260827b"></script>
+  <script src="home-pages.js?v=20260827b"></script>
+  <script src="app.js?v=20260827k"></script>
   <script src="tz-data.js?v=20260827e"></script>
   <script src="query.js?v=20260827e"></script>
   <script src="publish.js?v=20260827e"></script>
