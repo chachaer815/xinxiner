@@ -15,7 +15,8 @@
     clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), ms);
   }
   function highlight(text, keyword) {
-    if (!text || !keyword) return text || '';
+    text = esc(String(text == null ? '' : text));
+    if (!text || !keyword) return text;
     const regex = new RegExp('(' + keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
     return text.replace(regex, '<mark style="background:#ffe4a8;padding:0 4px;border-radius:4px;">$1</mark>');
   }
