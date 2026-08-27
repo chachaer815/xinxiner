@@ -6,7 +6,7 @@
   <title>丸子の工作宝宝</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23ffb7d2'/%3E%3Ccircle cx='32' cy='32' r='24' fill='%23fffdf8'/%3E%3Ctext x='32' y='44' font-size='30' text-anchor='middle'%3E%F0%9F%8E%90%3C/text%3E%3C/svg%3E" />
   <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.32.0/cloudbase.full.js"></script>
-  <link rel="stylesheet" href="style.css?v=20260827g">
+  <link rel="stylesheet" href="style.css?v=20260827j">
   <link rel="stylesheet" href="query.css?v=20260827e">
 </head>
 <body>
@@ -48,14 +48,30 @@
         <img class="nav-icon-img" src="assets/price.svg" alt="报价宝宝">
         <span class="nav-label">报价宝宝</span>
       </div>
+      <div class="nav-item" data-panel="beauty" title="变美宝宝">
+        <img class="nav-icon-img" src="assets/wm-beauty.svg" alt="变美宝宝">
+        <span class="nav-label">变美宝宝</span>
+      </div>
+      <div class="nav-item" data-panel="status" title="情况宝宝">
+        <img class="nav-icon-img" src="assets/wm-status.svg" alt="情况宝宝">
+        <span class="nav-label">情况宝宝</span>
+      </div>
+      <div class="nav-item" data-panel="asset" title="资产宝宝">
+        <img class="nav-icon-img" src="assets/wm-asset.svg" alt="资产宝宝">
+        <span class="nav-label">资产宝宝</span>
+      </div>
+      <div class="nav-item" data-panel="travel" title="旅行宝宝">
+        <img class="nav-icon-img" src="assets/wm-travel.svg" alt="旅行宝宝">
+        <span class="nav-label">旅行宝宝</span>
+      </div>
+      <div class="nav-item" data-panel="yearly" title="年度宝宝">
+        <img class="nav-icon-img" src="assets/wm-yearly.svg" alt="年度宝宝">
+        <span class="nav-label">年度宝宝</span>
+      </div>
       <div class="nav-item" data-panel="more" title="更多">
         <img class="nav-icon-img" src="assets/more.svg" alt="更多">
         <span class="nav-label">更多</span>
       </div>
-      <a class="nav-item" data-external="1" href="./wanzi-mini-web/" target="_blank" rel="noopener" title="小家宝宝" style="text-decoration:none;">
-        <img class="nav-icon-img" src="assets/logo.svg" alt="小家宝宝">
-        <span class="nav-label">小家宝宝</span>
-      </a>
     </nav>
 
     <!-- 右侧主内容 -->
@@ -580,38 +596,19 @@
 
 
     <!-- 每日计划 -->
-    <!-- 计划宝宝 -->
-    <div class="panel" id="panel-todo">
-      <div class="section"><div class="num">📋</div><div class="t">计划宝宝</div></div>
-      <div class="card">
-        <div class="plan-date-bar">
-          <button class="plan-date-btn" id="planPrev">‹</button>
-          <div class="plan-date-label" id="planDateLabel">今天</div>
-          <button class="plan-date-btn" id="planNext">›</button>
-          <button class="btn btn-ghost btn-mini" id="planToday" style="flex:0;">今天</button>
-        </div>
+    <!-- 变美宝宝 -->
+    <div class="panel" id="panel-beauty"><div class="home-page-root"></div></div>
+    <!-- 情况宝宝 -->
+    <div class="panel" id="panel-status"><div class="home-page-root"></div></div>
+    <!-- 资产宝宝 -->
+    <div class="panel" id="panel-asset"><div class="home-page-root"></div></div>
+    <!-- 旅行宝宝 -->
+    <div class="panel" id="panel-travel"><div class="home-page-root"></div></div>
+    <!-- 年度宝宝 -->
+    <div class="panel" id="panel-yearly"><div class="home-page-root"></div></div>
 
-        <div class="label">添加计划</div>
-        <div class="row">
-          <input type="text" id="planInput" class="input" placeholder="写下要做的事…" maxlength="80" style="flex:1;">
-          <button class="btn btn-primary" id="planAddBtn" style="flex:0;">➕ 添加</button>
-        </div>
-
-        <div class="plan-progress-wrap" id="planProgressWrap" style="display:none;margin-top:12px;">
-          <div class="plan-progress-track"><div class="plan-progress-fill" id="planProgressFill" style="width:0%;"></div></div>
-          <div class="plan-progress-text" id="planProgressText">0/0</div>
-        </div>
-
-        <div class="plan-filter">
-          <button class="btn btn-ghost btn-mini plan-filter-btn" data-filter="all">全部</button>
-          <button class="btn btn-ghost btn-mini plan-filter-btn" data-filter="active">未完成</button>
-          <button class="btn btn-ghost btn-mini plan-filter-btn" data-filter="done">已完成</button>
-        </div>
-
-        <div id="planList" style="margin-top:8px;"></div>
-        <div id="planEmpty" class="plan-empty" style="display:none;">这一天还没有计划～<br>写下第一件要做的事吧 ✏️</div>
-      </div>
-    </div>
+    <!-- 计划宝宝（wanzi-mini 每日计划） -->
+    <div class="panel" id="panel-todo"><div class="home-page-root"></div></div>
 
     <!-- 更多 -->
     <div class="panel" id="panel-more">
@@ -687,64 +684,18 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="app.js?v=20260827h"></script>
+  <script src="home-core.js?v=20260827a"></script>
+  <script src="home-pages.js?v=20260827a"></script>
+  <script src="app.js?v=20260827j"></script>
   <script src="tz-data.js?v=20260827e"></script>
   <script src="query.js?v=20260827e"></script>
   <script src="publish.js?v=20260827e"></script>
 
-<script>
-(function(){
-  (async function(){
-    await new Promise(r=>setTimeout(r,800));
-    // 点击薄荷主题
-    document.querySelector('.theme-dot.mint').click();
-    const t1 = document.body.dataset.theme;
-    // 添加计划
-    const inp = document.getElementById('planInput');
-    inp.value = '测试任务ABC';
-    document.getElementById('planAddBtn').click();
-    await new Promise(r=>setTimeout(r,300));
-    const cnt = document.querySelectorAll('.plan-item').length;
-    const saved = localStorage.getItem('wz_plan_v1:' + new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0')+'-'+String(new Date().getDate()).padStart(2,'0'));
-    document.title = 'TEST_' + t1 + '_' + cnt + '_' + (saved ? saved.length : 0);
-  })();
-})();
-</script>
 
-<script>
-(function(){
-  (async function(){
-    await new Promise(r=>setTimeout(r,800));
-    const inp = document.getElementById('planInput');
-    inp.value = '测试任务ABC';
-    document.getElementById('planAddBtn').click();
-    await new Promise(r=>setTimeout(r,300));
-    // 枚举所有 localStorage key
-    let keys = [];
-    for (let i=0;i<localStorage.length;i++) keys.push(localStorage.key(i));
-    const itemCount = document.querySelectorAll('.plan-item').length;
-    document.title = 'T2_' + itemCount + '_' + keys.join('|');
-  })();
-})();
-</script>
 
-<script>
-(function(){
-  setTimeout(function(){
-    document.querySelector('.theme-dot.mint').click();
-    document.title = 'MINT';
-  }, 800);
-})();
-</script>
 
-<script>
-(function(){
-  setTimeout(function(){
-    var p = document.querySelector('.nav-item[data-panel="price"]');
-    if(p) p.click();
-    document.title = 'PRICE_TEST';
-  }, 1000);
-})();
-</script>
+
+
+
 </body>
 </html>
