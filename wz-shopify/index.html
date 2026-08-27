@@ -7,6 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23ffb7d2'/%3E%3Ccircle cx='32' cy='32' r='24' fill='%23fffdf8'/%3E%3Ctext x='32' y='44' font-size='30' text-anchor='middle'%3E%F0%9F%8E%90%3C/text%3E%3C/svg%3E" />
   <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.32.0/cloudbase.full.js"></script>
   <link rel="stylesheet" href="style.css?v=20260826f">
+  <link rel="stylesheet" href="query.css?v=20260827a">
 </head>
 <body>
   <div class="workspace" id="app">
@@ -25,6 +26,10 @@
       <div class="nav-item" data-panel="todo" title="每日计划">
         <span class="nav-icon">📝</span>
         <span class="nav-label">每日计划</span>
+      </div>
+      <div class="nav-item" data-panel="query" title="查询宝宝">
+        <span class="nav-icon">🔍</span>
+        <span class="nav-label">查询宝宝</span>
       </div>
       <div class="nav-item" data-panel="more" title="更多">
         <span class="nav-icon">✨</span>
@@ -382,6 +387,155 @@
     </div>
     </div><!-- /panel-publish -->
 
+<!-- 查询宝宝 -->
+<div class="panel" id="panel-query">
+  <!-- ① 参数查询 -->
+  <div class="section"><div class="num">🔍</div><div class="t">参数查询</div></div>
+  <div class="card">
+    <div class="row">
+      <input type="text" id="searchInput" class="input" placeholder="输入型号，多个用空格或逗号分隔" autocomplete="off" style="flex:1;">
+      <button class="btn btn-primary" id="searchBtn" style="flex:0;padding:12px 20px;">🔍</button>
+    </div>
+    <div id="count" style="margin-top:10px;"></div>
+    <div id="results" style="margin-top:8px;"></div>
+  </div>
+
+  <!-- ② 全球换算 -->
+  <div class="section"><div class="num">🌍</div><div class="t">全球换算</div></div>
+  <div class="card">
+    <div class="row" style="gap:10px;">
+      <div class="global-card" data-tool="exchange" onclick="queryBaby.showGlobalTool('exchange')">
+        <span class="global-icon">💱</span><span class="global-title">汇率换算</span>
+      </div>
+      <div class="global-card" data-tool="timezone" onclick="queryBaby.showGlobalTool('timezone')">
+        <span class="global-icon">🕐</span><span class="global-title">时差查询</span>
+      </div>
+    </div>
+
+    <!-- 汇率 -->
+    <div id="gl-exchange" style="display:none;margin-top:12px;">
+      <div class="row" style="align-items:center;">
+        <input type="number" id="exInput" class="input" placeholder="金额" value="1" oninput="queryBaby.convert()" style="flex:0 0 90px;">
+        <select id="exFrom" class="input" style="flex:1;" onchange="queryBaby.fetchRate()">
+          <option value="CNY" selected>🇨🇳 CNY 人民币</option>
+          <option value="USD">🇺🇸 USD 美元</option>
+          <option value="EUR">🇪🇺 EUR 欧元</option>
+          <option value="GBP">🇬🇧 GBP 英镑</option>
+          <option value="JPY">🇯🇵 JPY 日元</option>
+          <option value="HKD">🇭🇰 HKD 港币</option>
+          <option value="KRW">🇰🇷 KRW 韩元</option>
+          <option value="CAD">🇨🇦 CAD 加元</option>
+          <option value="AUD">🇦🇺 AUD 澳元</option>
+          <option value="CHF">🇨🇭 CHF 瑞郎</option>
+          <option value="SGD">🇸🇬 SGD 新币</option>
+        </select>
+        <button class="btn btn-ghost btn-mini" onclick="queryBaby.swapCurrency()" title="互换货币" style="flex:0;">⇄</button>
+        <select id="exTo" class="input" style="flex:1;" onchange="queryBaby.convert()">
+          <option value="CNY">🇨🇳 CNY 人民币</option>
+          <option value="USD" selected>🇺🇸 USD 美元</option>
+          <option value="EUR">🇪🇺 EUR 欧元</option>
+          <option value="GBP">🇬🇧 GBP 英镑</option>
+          <option value="JPY">🇯🇵 JPY 日元</option>
+          <option value="HKD">🇭🇰 HKD 港币</option>
+          <option value="KRW">🇰🇷 KRW 韩元</option>
+          <option value="CAD">🇨🇦 CAD 加元</option>
+          <option value="AUD">🇦🇺 AUD 澳元</option>
+          <option value="CHF">🇨🇭 CHF 瑞郎</option>
+          <option value="SGD">🇸🇬 SGD 新币</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+        <div id="exResult" style="font-size:22px;font-weight:700;color:var(--pink-d);flex:1;">—</div>
+        <button class="btn btn-ghost btn-mini" onclick="queryBaby.refreshRate()" title="刷新汇率">↻ 刷新</button>
+      </div>
+      <div id="exRate" class="hint" style="margin-top:8px;">📡 汇率数据加载中...</div>
+    </div>
+
+    <!-- 时差 -->
+    <div id="gl-timezone" style="display:none;margin-top:12px;">
+      <div class="row" style="align-items:center;gap:10px;">
+        <div style="flex:1;position:relative;">
+          <input type="text" id="tzCityA" class="input" placeholder="城市/国家/区号" oninput="queryBaby.tzSearch('A')" onfocus="queryBaby.tzSearch('A')" autocomplete="off">
+          <div id="tzSuggestA" class="tz-suggest"></div>
+        </div>
+        <span style="color:#a08bb0;font-weight:700;">VS</span>
+        <div style="flex:1;position:relative;">
+          <input type="text" id="tzCityB" class="input" placeholder="城市/国家/区号" oninput="queryBaby.tzSearch('B')" onfocus="queryBaby.tzSearch('B')" autocomplete="off">
+          <div id="tzSuggestB" class="tz-suggest"></div>
+        </div>
+      </div>
+      <div id="tzResult" style="text-align:center;padding:16px;font-size:14px;color:#a08bb0;">
+        输入两个城市或国家名称，自动计算时差
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 物流工具 -->
+  <div class="section"><div class="num">📦</div><div class="t">物流工具</div></div>
+  <div class="card">
+    <div class="row" style="gap:10px;">
+      <div class="logistics-card" data-tool="express" onclick="queryBaby.showLogisticsTool('express')">
+        <span class="logistics-icon">🚚</span><span class="logistics-title">快递查询</span>
+      </div>
+      <div class="logistics-card" data-tool="packaging" onclick="queryBaby.showLogisticsTool('packaging')">
+        <span class="logistics-icon">📐</span><span class="logistics-title">包装预估</span>
+      </div>
+    </div>
+
+    <!-- 快递 -->
+    <div id="lg-express" style="display:none;margin-top:12px;">
+      <div class="row">
+        <select id="expCompany" class="input" style="flex:0 0 130px;">
+          <option value="shunfeng">顺丰速运</option>
+          <option value="debang">德邦快递</option>
+          <option value="ems">EMS</option>
+          <option value="dhl">DHL</option>
+          <option value="ups">UPS</option>
+          <option value="fedex">FedEx</option>
+        </select>
+        <input type="text" id="expNumber" class="input" placeholder="输入快递单号" style="flex:1;" onkeydown="if(event.key==='Enter')queryBaby.queryExpress()">
+        <button class="btn btn-primary" onclick="queryBaby.queryExpress()" style="flex:0;">🔍 查询</button>
+      </div>
+      <div id="expResult" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- 包装预估 -->
+    <div id="lg-packaging" style="display:none;margin-top:12px;">
+      <textarea id="pkgInput" class="input" placeholder="输入产品信息，例如：
+15×12×10cm，0.5kg，100个
+
+也可以多行输入多款产品：
+产品A：20×15×10cm，1.2kg，50个
+产品B：30×20×15cm，2.5kg，30个" style="min-height:100px;"></textarea>
+      <button class="btn btn-primary btn-block" style="margin-top:10px;" onclick="queryBaby.estimatePackaging()">🤖 AI 计算装箱</button>
+      <div id="pkgResult" style="margin-top:10px;"></div>
+      <div class="hint">AI 由火山引擎提供，密钥安全存放在服务端，不出现在网页代码中。</div>
+    </div>
+  </div>
+
+  <!-- ④ 链接抓取 -->
+  <div class="section"><div class="num">🔗</div><div class="t">链接抓取</div></div>
+  <div class="card">
+    <div class="label">Shopify 店铺网址</div>
+    <input type="text" id="lfStoreUrl" class="input" placeholder="https://www.xxx">
+    <div class="label">型号列表（一行一个）</div>
+    <textarea id="lfInput" class="input" placeholder="一行一个型号" style="min-height:110px;font-family:Consolas,monospace;"></textarea>
+    <div class="row" style="margin-top:10px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="queryBaby.linkFetcherSearch()">🔎 查找</button>
+      <button class="btn btn-ghost" onclick="queryBaby.linkFetcherClear()">✕ 清空</button>
+      <button class="btn btn-ghost" onclick="queryBaby.linkFetcherCopy()">📋 复制</button>
+    </div>
+    <div id="lfInfo" class="hint" style="margin-top:10px;"></div>
+    <div style="max-height:400px;overflow:auto;margin-top:8px;border-radius:12px;border:2px solid var(--line);">
+      <table id="lfResultTable" style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:#fdf7fb;"><th style="padding:10px 8px;color:var(--purple-d);position:sticky;top:0;">#</th><th style="padding:10px 8px;color:var(--purple-d);position:sticky;top:0;">型号</th><th style="padding:10px 8px;color:var(--purple-d);position:sticky;top:0;">标题</th><th style="padding:10px 8px;color:var(--purple-d);position:sticky;top:0;">链接</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
     <!-- 每日计划 -->
     <div class="panel" id="panel-todo">
       <div class="card">
@@ -399,6 +553,54 @@
     </div>
   </main>
   </div>
+
+<!-- 添加产品模态框 -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span>📦</span> 添加产品
+      <button class="modal-close">✕</button>
+    </div>
+    <div id="addFormContent">
+      <div class="form-group">
+        <label class="form-label">型号 *</label>
+        <input type="text" class="form-input" id="addModel" placeholder="例如：ABC-1234" autocomplete="off">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">尺寸</label>
+          <input type="text" class="form-input" id="addSize" placeholder="例如：10x20x5cm">
+        </div>
+        <div class="form-group">
+          <label class="form-label">重量</label>
+          <input type="text" class="form-input" id="addWeight" placeholder="例如：1.5kg">
+        </div>
+      </div>
+      <div class="form-hint">* 必填项，尺寸和重量可留空，稍后补充</div>
+      <div class="form-group">
+        <label class="form-label">描述</label>
+        <input type="text" class="form-input" id="addName" placeholder="产品名称或描述（选填）" autocomplete="off">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel">取消</button>
+        <button class="btn-save" id="saveBtn">保存入库</button>
+      </div>
+    </div>
+    <div id="addSuccessContent" style="display:none;">
+      <div class="form-success">
+        <div class="success-icon">✅</div>
+        <div class="success-text">添加成功！</div>
+        <div class="success-model" id="savedModelName"></div>
+        <div style="color:#a08bb0;font-size:13px;margin-top:8px;">已自动入库，可直接查询</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel">关闭</button>
+        <button class="btn-save view-result">查看结果</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
   <div class="toast" id="toast"></div>
 
@@ -423,6 +625,8 @@
       setInterval(updateWsTime, 1000);
     })();
   </script>
+  <script src="tz-data.js?v=20260827a"></script>
+  <script src="query.js?v=20260827a"></script>
   <script src="publish.js?v=20260826b"></script>
 </body>
 </html>
