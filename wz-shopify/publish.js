@@ -1178,5 +1178,169 @@
       loadQueue();
       setInterval(tickTokenTimers, 1000);
       setInterval(loadQueue, 30000);
+      initDedup();
     })();
+
+    // ============================================================
+    // ⑤ 批量查重
+    // ============================================================
+    const DUP_INDEX_QUERY = `query DupIndex($first: Int!, $after: String) { products(first: $first, after: $after, sortKey: CREATED_AT, reverse: true) { edges { node { id title handle variants(first: 100) { edges { node { sku } } } } } pageInfo { hasNextPage endCursor } } }`;
+    const DUP_PAGE = 100;
+    let dupIndex = { key: '', products: [], fetchedAt: 0 }; // 内存索引：{ title, handle, skus: [] }
+
+    function initDedup() {
+      const runBtn = $('dupRunBtn');
+      const refreshBtn = $('dupRefreshBtn');
+      if (!runBtn) return;
+      runBtn.addEventListener('click', runDedup);
+      refreshBtn.addEventListener('click', async () => { dupIndex = { key: '', products: [], fetchedAt: 0 }; toast('索引已清除，重新拉取中…'); await runDedup(); });
+      // 店铺切换时更新显示
+      const sel = $('shopSelect');
+      if (sel) sel.addEventListener('change', () => { dupIndex = { key: '', products: [], fetchedAt: 0 }; updateDupShopName(); });
+      updateDupShopName();
+    }
+
+    function updateDupShopName() {
+      const el = $('dupShopName');
+      if (!el) return;
+      const sel = $('shopSelect');
+      const name = sel && sel.selectedOptions[0] ? sel.selectedOptions[0].textContent.trim() : '当前店铺';
+      el.textContent = name;
+    }
+
+    // 拉取店铺全量产品索引（分页，缓存）
+    async function ensureDupIndex(key) {
+      if (dupIndex.key === key && dupIndex.products.length > 0) return dupIndex.products;
+      const prog = $('dupProgress'); const progText = $('dupProgressText');
+      if (prog) { prog.style.display = 'flex'; if (progText) progText.textContent = '⏳ 正在拉取店铺产品索引…'; }
+      const all = [];
+      let cursor = null, page = 0;
+      try {
+        do {
+          page++;
+          const result = await gqlWithRetry(DUP_INDEX_QUERY, { first: DUP_PAGE, after: cursor }, key);
+          if (result.errors?.length) throw new Error(formatErrors(result.errors));
+          const edges = result.data?.products?.edges ?? [];
+          for (const edge of edges) {
+            const node = edge.node;
+            const skus = (node.variants?.edges ?? []).map(v => (v.node?.sku || '').trim()).filter(Boolean);
+            all.push({ id: node.id, title: node.title || '', handle: node.handle || '', skus });
+          }
+          if (progText) progText.textContent = `⏳ 已拉取 ${all.length} 个产品…`;
+          const pageInfo = result.data?.products?.pageInfo;
+          cursor = pageInfo?.hasNextPage ? pageInfo.endCursor : null;
+          if (page > 200) break; // 防呆：最多 2 万产品
+        } while (cursor);
+        dupIndex = { key, products: all, fetchedAt: Date.now() };
+        if (progText) progText.textContent = `✅ 索引就绪：${all.length} 个产品`;
+        return all;
+      } catch (err) {
+        if (progText) progText.textContent = '❌ 索引拉取失败：' + (err?.message || err);
+        throw err;
+      } finally {
+        setTimeout(() => { if (prog) prog.style.display = 'none'; }, 1500);
+      }
+    }
+
+    // 查重模式：sku=完全一致；title=标题包含；both=两者同时命中
+    function matchProduct(model, product, mode) {
+      const m = String(model || '').trim().toUpperCase();
+      if (!m) return false;
+      const skuHit = product.skus.some(s => String(s).toUpperCase() === m);
+      const titleHit = product.title.toUpperCase().includes(m);
+      if (mode === 'sku') return skuHit;
+      if (mode === 'title') return titleHit;
+      if (mode === 'both') return skuHit && titleHit;
+      return skuHit;
+    }
+
+    async function runDedup() {
+      const input = $('dupInput'); const resultEl = $('dupResult'); const statusEl = $('dupStatus');
+      const raw = (input?.value || '').trim();
+      if (!raw) { toast('请先输入型号'); return; }
+      const models = raw.split(/[\n\r,\uFF0C]+/).map(s => s.trim()).filter(Boolean);
+
+      if (!models.length) { toast('未识别到型号'); return; }
+      const mode = (document.querySelector('input[name="dupMode"]:checked') || {}).value || 'sku';
+      const key = S.shopKeys[shopIndex()];
+      if (!key) { toast('请先选择目标店铺'); return; }
+      if (statusEl) statusEl.textContent = '';
+      resultEl.innerHTML = '<div class="hint">⏳ 拉取店铺索引…</div>';
+      try {
+        const products = await ensureDupIndex(key);
+        resultEl.innerHTML = '<div class="hint">⏳ 正在比对 ' + models.length + ' 个型号…</div>';
+        await new Promise(r => setTimeout(r, 30)); // 让渲染先出来
+        const found = [], notFound = [];
+        for (const model of models) {
+          const hits = products.filter(p => matchProduct(model, p, mode));
+          if (hits.length > 0) found.push({ model, hits });
+          else notFound.push(model);
+        }
+        renderDupResult(resultEl, models, found, notFound, mode);
+      } catch (err) {
+        resultEl.innerHTML = '<div class="hint error">❌ ' + esc(err?.message || err) + '</div>';
+      }
+    }
+
+    function renderDupResult(el, models, found, notFound, mode) {
+      const modeName = { sku: 'SKU 完全一致', title: '标题包含', both: 'SKU+标题同时命中' }[mode] || mode;
+      let html = '<div class="dup-summary">';
+      html += '<span class="badge b-ok">已发过 ' + found.length + '</span> ';
+      html += '<span class="badge b-muted">未发过 ' + notFound.length + '</span> ';
+      html += '<span class="badge b-info">模式：' + modeName + '</span>';
+      html += '</div>';
+      html += '<div class="row" style="margin-top:10px;">';
+      html += '<button class="btn btn-ghost btn-mini" id="dupCopyFound">📋 复制已发过 (' + found.length + ')</button>';
+      html += '<button class="btn btn-primary btn-mini" id="dupCopyNotFound">📋 复制未发过 (' + notFound.length + ')</button>';
+      html += '</div>';
+      // 已发过列表（可折叠）
+      if (found.length) {
+        html += '<div class="dup-section"><div class="dup-head" data-fold><span>✅ 已发过的型号</span><span class="dup-arrow">▼</span></div>';
+        html += '<div class="dup-body">';
+        for (const item of found) {
+          html += '<div class="dup-item"><b>' + esc(item.model) + '</b>';
+          for (const hit of item.hits.slice(0, 3)) {
+            html += '<div class="dup-hit">→ <a href="https://' + esc(S.shops[keyForDup()]?.store || '') + '/products/' + esc(hit.handle) + '" target="_blank" rel="noopener">' + esc(hit.title) + '</a></div>';
+          }
+          if (item.hits.length > 3) html += '<div class="dup-hit" style="color:var(--soft);">… 共 ' + item.hits.length + ' 个匹配</div>';
+          html += '</div>';
+        }
+        html += '</div></div>';
+      }
+      // 未发过列表（默认展开）
+      if (notFound.length) {
+        html += '<div class="dup-section open"><div class="dup-head" data-fold><span>🆕 未发过的型号</span><span class="dup-arrow">▼</span></div>';
+        html += '<div class="dup-body">';
+        for (const m of notFound) html += '<div class="dup-item">' + esc(m) + '</div>';
+        html += '</div></div>';
+      }
+      el.innerHTML = html;
+      // 折叠交互（事件委托）
+      el.querySelectorAll('.dup-head[data-fold]').forEach(head => {
+        head.addEventListener('click', () => head.parentNode.classList.toggle('open'));
+      });
+      // 复制按钮
+      const cf = $('dupCopyFound'); const cnf = $('dupCopyNotFound');
+      if (cf) cf.addEventListener('click', () => copyModels(found.map(f => f.model), cf));
+      if (cnf) cnf.addEventListener('click', () => copyModels(notFound, cnf));
+      // 状态栏
+      const statusEl = $('dupStatus');
+      if (statusEl) statusEl.textContent = '索引 ' + dupIndex.products.length + ' 个产品 · ' + new Date(dupIndex.fetchedAt).toLocaleTimeString('zh-CN');
+    }
+
+    function keyForDup() { return dupIndex.key; }
+
+    function copyModels(models, btn) {
+      if (!models.length) { toast('没有可复制的型号'); return; }
+      navigator.clipboard.writeText(models.join('\n')).then(() => {
+        btn.textContent = '✅ 已复制 ' + models.length + ' 个';
+        setTimeout(() => { btn.textContent = btn.id === 'dupCopyFound' ? ('📋 复制已发过 (' + models.length + ')') : ('📋 复制未发过 (' + models.length + ')'); }, 2000);
+      }).catch(() => {
+        // 兜底：textarea 复制
+        const ta = document.createElement('textarea');
+        ta.value = models.join('\n'); document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); btn.textContent = '✅ 已复制'; } catch(e) { toast('复制失败，请手动选择'); }
+        document.body.removeChild(ta);
+      });
+    }
   
