@@ -23,7 +23,7 @@
 
   // ===== Supabase 配置 =====
   const SUPABASE_URL = 'https://omhtrpqdxdwbmwfdkgeg.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9taHRycHFkeGR3Ym13ZmRrZ2VnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4NTM4MTIsImV4cCI6MjA5NTQyOTgxMn0.N0jQCl0YoTH21nnrrVpn1nDRPVd4PPb5N9beRCTUx9s';
+  const SUPABASE_KEY = 'sb_publishable_GfN5hUFLP3PN7A14eVah3w_SbD12PjC';
   const SB_HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' };
 
   // ============================================================
