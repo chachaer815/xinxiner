@@ -80,40 +80,47 @@ body {
 
 /* ===== 工作台布局 ===== */
 .workspace {
-  display: grid;
-  grid-template-columns: 92px 1fr;
-  grid-template-rows: auto 1fr;
-  grid-template-areas:
-    "top top"
-    "side main";
+  display: flex;
+  flex-direction: column;
   width: 100vw; max-width: 100vw; height: 100vh; height: 100dvh;
   overflow: hidden;
 }
 
-.topbar-ws {
-  grid-area: top;
-  height: 64px;
-  display: flex; align-items: center;
-  padding: 0 20px;
-  background: var(--topbar-bg);
-  background-image: radial-gradient(var(--dot) 2px, transparent 2px);
+/* wanzi-mini 原版 nav-bar */
+.nav-bar {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 100;
+  background: var(--cream);
+  background-image: radial-gradient(var(--dot) 1.3px, transparent 1.3px);
   background-size: 24px 24px;
-  border-bottom: 3px dashed #e3cfae;
-  backdrop-filter: blur(8px);
-  z-index: 60;
+  border-bottom: 2px dashed #e3cfae;
 }
-.nav-inner { display: flex; align-items: center; gap: 14px; width: 100%; }
-.nav-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.nav-logo-img { width: 34px; height: 34px; display: block; filter: drop-shadow(0 2px 3px rgba(214,180,220,.4)); }
-.nav-title { font-size: 17px; font-weight: 700; color: var(--ink); white-space: nowrap; }
-.nav-right { flex: 1; min-width: 0; text-align: right; overflow: hidden; }
-.nav-sub { font-size: 11px; color: var(--ink-soft); font-style: italic; letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ws-time {
-  font-size: 13px; font-weight: 700; color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  background: var(--card); border: 2px solid var(--line); border-radius: 12px 9px 13px 10px;
-  padding: 4px 12px; flex-shrink: 0;
+.nav-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  height: 48px;
 }
+.nav-logo { display: flex; align-items: center; gap: 6px; flex-shrink: 0; cursor: pointer; }
+.nav-logo-img { width: 30px; height: 30px; display: block; }
+.nav-title { font-size: 16px; font-weight: 700; color: var(--ink); line-height: 1.2; white-space: nowrap; }
+.nav-right { flex: 1; min-width: 0; overflow: hidden; text-align: right; padding-right: 4px; }
+.nav-quote-zh { font-size: 12px; font-weight: 700; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); }
+.nav-quote-en { font-size: 9px; color: var(--ink-soft); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav-menu-btn {
+  width: 32px; height: 32px;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 2px 2px 0 rgba(107,91,79,.18);
+  cursor: pointer;
+}
+.nav-menu-img { width: 18px; height: 18px; }
+.nav-placeholder { display: none; }
 /* 主题切换 */
 .theme-switch { display: flex; gap: 4px; background: var(--card); border: var(--bd); border-radius: var(--r-sm); padding: 3px; }
 .theme-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px var(--line); cursor: pointer; transition: transform .15s; }
@@ -124,15 +131,7 @@ body {
 .theme-dot.lavender { background: #e3d8ff; }
 
 /* ===== 侧边栏 ===== */
-.sidebar {
-  grid-area: side;
-  background: var(--sidebar-bg);
-  border-right: 2px dashed var(--line);
-  display: flex; flex-direction: column; gap: 8px;
-  padding: 14px 10px;
-  overflow-y: auto;
-  z-index: 50;
-}
+
 .nav-item {
   position: relative;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -166,7 +165,7 @@ body {
 .nav-item.drop-after::after { bottom: -5px; }
 
 /* ===== 主内容 ===== */
-.main { grid-area: main; overflow-y: auto; padding: 18px; }
+.main { flex: 1; overflow-y: auto; padding: 14px; padding-bottom: 86px; }
 .panel { display: none; width: 92%; margin: 0 auto; max-width: 980px; }
 .panel.active { display: block; }
 
@@ -1596,3 +1595,75 @@ textarea.inp {
 .home-page-root .amt.out { color: #d9534f; }
 .home-page-root .ai-result { background: #fff6f9; border: 1px dashed var(--line); border-radius: 12px; padding: 12px; font-size: 13px; margin: 10px 0; white-space: pre-wrap; line-height: 1.8; }
 .home-page-root .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ===== wanzi-mini 原版抽屉全菜单 ===== */
+.nav-drawer-mask {
+  position: fixed; inset: 0;
+  background: rgba(107,91,79,.4);
+  z-index: 200;
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s;
+}
+.nav-drawer-mask.show { opacity: 1; pointer-events: auto; }
+.nav-drawer {
+  position: absolute; top: 0; left: 0; bottom: 0;
+  width: 78%; max-width: 310px;
+  background: var(--paper);
+  border-right: 2px solid var(--ink);
+  display: flex; flex-direction: column;
+  padding: 12px;
+  transform: translateX(-105%);
+  transition: transform .28s ease;
+  overflow-y: auto;
+}
+.nav-drawer.open { transform: translateX(0); }
+.drawer-head { display: flex; align-items: center; gap: 8px; padding: 6px 4px 10px; border-bottom: 2px dashed #e3cfae; }
+.drawer-logo { width: 42px; height: 42px; flex-shrink: 0; }
+.drawer-head-text { flex: 1; min-width: 0; }
+.drawer-name { font-size: 17px; font-weight: 700; display: block; line-height: 1.25; word-break: break-all; }
+.drawer-sub { font-size: 9px; letter-spacing: 2px; color: var(--ink-soft); display: block; margin-top: 2px; }
+.drawer-nav-list { flex: 1; margin-top: 8px; overflow-y: auto; }
+.drawer-nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  margin-bottom: 6px;
+  transition: all .15s;
+  cursor: pointer;
+}
+.drawer-nav-item.active { background: var(--pink); border: 2px solid var(--ink); box-shadow: 2.5px 2.5px 0 rgba(107,91,79,.2); font-weight: 700; }
+.drawer-nav-icon {
+  width: 30px; height: 30px; flex-shrink: 0;
+  background: #fff; border: 2px solid var(--ink); border-radius: 10px;
+  padding: 3px; box-shadow: 1.5px 1.5px 0 rgba(107,91,79,.14);
+}
+.drawer-nav-name { flex: 1; font-size: 14px; }
+.drawer-foot { display: flex; flex-wrap: wrap; gap: 5px; border-top: 2px dashed #e3cfae; padding-top: 10px; }
+.drawer-foot-btn {
+  flex: 1; min-width: 28%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; background: #fff; border: 2px solid var(--ink); border-radius: 10px;
+  padding: 7px 3px; font-size: 11px; box-shadow: 2px 2px 0 rgba(107,91,79,.18);
+  cursor: pointer;
+}
+.dfb-icon { width: 15px; height: 15px; }
+
+/* ===== wanzi-mini 原版底部 5 窄 tab ===== */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  display: flex;
+  background: rgba(255,253,246,.97);
+  border-top: 1px solid rgba(107,91,79,.25);
+  z-index: 150;
+  padding: 4px 2px calc(4px + env(safe-area-inset-bottom));
+}
+.bnav-btn {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px; padding: 3px 2px;
+  background: none; border: none; cursor: pointer;
+}
+.bnav-icon { width: 22px; height: 22px; object-fit: contain; }
+.bnav-label { font-size: 9.5px; color: var(--ink-soft); font-weight: 600; }
+.bnav-btn.active .bnav-label { color: var(--ink); font-weight: 700; }
