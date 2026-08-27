@@ -41,6 +41,7 @@
     const fn = PAGES[page] || PAGES.index;
     body.innerHTML = fn();
     bindPage(page);
+    if (typeof afterBind === 'function') afterBind(page);
     const sc = body.closest('.main') || document.querySelector('.main');
     if (sc) sc.scrollTop = 0;
   }
@@ -91,6 +92,18 @@
       ).join('') : '<div class="empty"><img class="empty-img" src="assets/wm-plan.svg"><text>今天还没有计划～</text></div>') +
       '  <div class="btn sm ghost row-btn" style="margin-top:16px" data-act="goPage" data-val="plan">查看计划 →</div>' +
       '</div>' +
+      // 金句卡（原版每日金句）
+      '<div class="card">' +
+      '  <div class="card-title"><img class="ct-icon" src="assets/wm-sparkle.svg"><text>每日金句</text>' +
+      '    <div class="ct-right"><div class="btn sm ghost btn-mini" data-act="refreshQuoteBtn">↻ 换一句</div></div></div>' +
+      '  <div id="quoteZh" style="font-size:15px;font-weight:700;">' + (s.quotes && s.quotes[today] ? h(s.quotes[today].zh) : FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)][0]) + '</div>' +
+      '  <div id="quoteEn" style="font-size:12px;color:var(--ink-soft);font-style:italic;margin-top:4px;">' + (s.quotes && s.quotes[today] ? h(s.quotes[today].en) : '') + '</div>' +
+      '</div>' +
+      // AI 洞察 banner
+      '<div class="insight-banner">' +
+      '  <div class="ib-title">🪄 今日 AI 洞察 <span class="hint" id="insightState"></span></div>' +
+      '  <div id="todayInsight" class="ai-result">' + '' + '</div>' +
+      '</div>' +
       '<div class="grid-2">' +
       quickCard('beauty', '变瘦变美', 'beauty') +
       quickCard('travel', '我的旅行', 'travel') +
@@ -102,7 +115,7 @@
   };
   function quickCard(page, name, icon) {
     return '<div class="quick-card" data-act="goPage" data-val="' + page + '">' +
-      '<img class="qc-icon" src="icons/' + icon + '.svg"><text>' + name + '</text></div>';
+      '<img class="qc-icon" src="assets/wm-' + icon + '.svg"><text>' + name + '</text></div>';
   }
   function streakDays(checkins) {
     let streak = 0;
@@ -911,8 +924,122 @@
   };
 
 
+  // ===== 每日金句 AI（原版 quote-card 复刻）=====
+  const FALLBACK_QUOTES = [
+    ['你负责努力，时间负责给你惊喜。', 'Work hard, and time will surprise you.'],
+    ['今天的丸子也在闪闪发光呀！', 'You are shining brightly today too!'],
+    ['慢慢来，谁的花期都不一样。', 'Take your time; every flower blooms differently.'],
+    ['把平凡的日子过得热气腾腾。', 'Make ordinary days warm and wonderful.'],
+    ['你走的每一步都算数。', 'Every step you take counts.'],
+    ['先完成，再完美。', 'Done is better than perfect.'],
+    ['保持热爱，奔赴山海。', 'Keep your passion and chase your dreams.'],
+    ['小小的坚持，大大的改变。', 'Small persistence brings big changes.'],
+    ['好好吃饭，好好睡觉，好好爱自己。', 'Eat well, sleep well, love yourself.'],
+    ['一切皆有望，万物皆可期。', 'Everything is hopeful; anything is possible.']
+  ];
+  async function initDailyQuote() {
+    const s = S();
+    const today = A.todayStr();
+    // 当日已生成 → 直接用
+    if (s.quotes && s.quotes[today]) {
+      const q = s.quotes[today];
+      const zhEl = document.getElementById('navQuoteZh');
+      const enEl = document.getElementById('navQuoteEn');
+      if (zhEl) zhEl.textContent = q.zh;
+      if (enEl) enEl.textContent = q.en;
+      return;
+    }
+    // 先用本地金句兜底
+    const fb = FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)];
+    try {
+      const reply = await A.aiAsk(
+        '请生成一句今日金句，格式如下两行：第一行中文温暖治愈短句（15字内），第二行对应英文翻译。不要任何其他内容。',
+        '你是温柔的治愈系文案助手。只输出两行：中文句子、英文翻译。'
+      );
+      const lines = reply.split('\n').filter(l => l.trim());
+      if (lines.length >= 2) {
+        if (!s.quotes) s.quotes = {};
+        s.quotes[today] = { zh: lines[0].trim(), en: lines[1].replace(/^["']|["']$/g, '').trim() };
+        A.save();
+        const zhEl = document.getElementById('navQuoteZh');
+        const enEl = document.getElementById('navQuoteEn');
+        if (zhEl && enEl) { zhEl.textContent = s.quotes[today].zh; enEl.textContent = s.quotes[today].en; }
+      }
+    } catch (e) { /* AI 不可用时保持 fallback */ }
+  }
+
+  // 首页动作：金句刷新 + AI 洞察
+  PAGE_ACTIONS.refreshQuoteBtn = async function () {
+    const zhEl = document.getElementById('quoteZh');
+    const enEl = document.getElementById('quoteEn');
+    if (zhEl) zhEl.textContent = 'AI 正在写今日金句…';
+    if (enEl) enEl.textContent = '';
+    try {
+      const reply = await A.aiAsk(
+        '请生成一句今日金句，格式两行：第一行中文温暖治愈短句（15字内），第二行对应英文翻译。不要其他内容。',
+        '你是温柔的治愈系文案助手。只输出两行。'
+      );
+      const lines = reply.split('\n').filter(l => l.trim());
+      if (lines.length >= 2) {
+        const s = S();
+        if (!s.quotes) s.quotes = {};
+        s.quotes[A.todayStr()] = { zh: lines[0].trim(), en: lines[1].trim() };
+        A.save();
+        renderPage('index');
+      } else { toast('AI 返回格式异常，再试一次'); }
+    } catch (e) {
+      toast('AI 调用失败：' + e.message);
+      renderPage('index');
+    }
+  };
+  // 首页 AI 洞察（原版：下午3点后自动生成）
+  function checkInsight() {
+    const s = S();
+    const today = A.todayStr();
+    const el = document.getElementById('todayInsight');
+    if (!el) return;
+    if (s.insights && s.insights['day_' + today]) { el.textContent = s.insights['day_' + today]; return; }
+    const hour = new Date().getHours();
+    if (hour < 15) { el.textContent = '今天的洞察会在下午 3 点后生成～'; return; }
+    el.innerHTML = '<span class="ai-spin"></span> 正在分析今天…';
+    const summary = buildDaySummary(s, today);
+    A.aiAsk('请根据今天的情况，用温暖、像好朋友一样的语气生成一段 100 字以内的总结和建议。重点说亮点和 1 个具体建议。\n\n' + summary,
+      '你是一个温柔但有洞察力的生活教练，话不多，只说重点。')
+      .then(reply => {
+        if (!s.insights) s.insights = {};
+        s.insights['day_' + today] = reply;
+        A.save();
+        if (document.getElementById('todayInsight')) document.getElementById('todayInsight').textContent = reply;
+      })
+      .catch(() => { if (document.getElementById('todayInsight')) document.getElementById('todayInsight').textContent = '今天没有生成洞察，明天再试试～'; });
+  }
+  function buildDaySummary(s, today) {
+    const plans = (s.plans[today] || []);
+    const planDone = plans.filter(p => p.done).length;
+    const st = s.status[today] || {};
+    const sleepH = Number(st.sleepH) || 0; const sleepM = Number(st.sleepM) || 0;
+    const sleep = sleepH + sleepM / 60;
+    const water = (s.beauty.daily[today] && s.beauty.daily[today].water) || 0;
+    const wl = (s.beauty.weights || []).filter(w => w.d === today);
+    const weight = wl.length ? wl[wl.length - 1].value : null;
+    let out = 0; (s.assets.txs || []).forEach(tx => { if (tx.d === today && tx.type === 'out') out += tx.amount; });
+    return '今日计划：' + planDone + '/' + plans.length + ' 完成；心情：' + (st.mood || '未记录') + '；睡眠：' + (sleep ? sleep.toFixed(1) + 'h' : '未记录') + '；能量：' + (st.energy || 0) + '%；喝水：' + water + '/' + (s.beauty.waterGoal || 8) + '杯；体重：' + (weight ? weight + 'kg' : '未记录') + '；支出：¥' + out.toFixed(2) + '。';
+  }
+
+  // 首页渲染后钩子（金句 + AI 洞察）
+  function afterBind(page) {
+    if (page === 'index') { renderQuoteCard(); checkInsight(); }
+  }
+  function renderQuoteCard() {
+    const s = S(); const today = A.todayStr();
+    const zhEl = document.getElementById('quoteZh'); const enEl = document.getElementById('quoteEn');
+    if (!zhEl) return;
+    if (s.quotes && s.quotes[today]) { zhEl.textContent = s.quotes[today].zh; enEl.textContent = s.quotes[today].en; }
+  }
+
   // ===== 导出 =====
   window.HomePages = {
+    initQuote: initDailyQuote,
     render(page, container) { curContainer = container || null; renderPage(page); },
     get page() { return curPage; },
   };
