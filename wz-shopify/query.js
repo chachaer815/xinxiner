@@ -26,6 +26,13 @@
   const SUPABASE_KEY = 'sb_publishable_GfN5hUFLP3PN7A14eVah3w_SbD12PjC';
   const SB_HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' };
 
+  function getQPw() { try { return localStorage.getItem('wz_query_pwd') || ''; } catch (e) { return ''; } }
+  function askQPw() {
+    let pw = getQPw();
+    if (!pw) { pw = prompt('请输入查询口令（首次输入后会记住）') || ''; if (pw) { try { localStorage.setItem('wz_query_pwd', pw); } catch (e) {} } }
+    return pw;
+  }
+
   // ============================================================
   // ① 参数查询
   // ============================================================
@@ -51,9 +58,13 @@
     try {
       let results = [];
       for (const kw of keywords) {
-        const url = SUPABASE_URL + '/rest/v1/rpc/search_products?search_text=' + encodeURIComponent(kw);
-        const resp = await fetch(url, { method: 'GET', headers: SB_HEADERS });
-        if (!resp.ok) throw new Error('API Error: ' + resp.status);
+        const resp = await fetch(SUPABASE_URL + '/rest/v1/rpc/search_products_sec', { method: 'POST', headers: SB_HEADERS, body: JSON.stringify({ p_password: askQPw(), p_search: kw }) });
+        if (!resp.ok) {
+          let msg = 'API Error: ' + resp.status;
+          try { const j = await resp.json(); if (j && j.message) msg = j.message; } catch (e) {}
+          if (/口令/.test(msg)) { try { localStorage.removeItem('wz_query_pwd'); } catch (e) {} }
+          throw new Error(msg);
+        }
         const data = await resp.json();
         if (data) results = results.concat(data);
       }
@@ -141,12 +152,17 @@
     const btn = $('saveBtn');
     btn.disabled = true; btn.textContent = '保存中...';
     try {
-      const resp = await fetch(SUPABASE_URL + '/rest/v1/products_new', {
+      const resp = await fetch(SUPABASE_URL + '/rest/v1/rpc/admin_insert_products', {
         method: 'POST',
-        headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
-        body: JSON.stringify({ model, size: size || null, weight: weight || null, name: name || null })
+        headers: { ...SB_HEADERS },
+        body: JSON.stringify({ p_password: askQPw(), p_rows: [{ model, name: name || null, size: size || null, weight: weight || null, params: null }] })
       });
-      if (!resp.ok) throw new Error('添加失败: ' + resp.status);
+      if (!resp.ok) {
+        let msg = '添加失败: ' + resp.status;
+        try { const j = await resp.json(); if (j && j.message) msg = j.message; } catch (e) {}
+        if (/口令/.test(msg)) { try { localStorage.removeItem('wz_query_pwd'); } catch (e) {} }
+        throw new Error(msg);
+      }
       $('addFormContent').style.display = 'none';
       $('savedModelName').textContent = model;
       $('addSuccessContent').style.display = 'block';
