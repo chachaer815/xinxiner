@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  BOSS
+  SALES
+}
+
+enum AccountStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum InquiryStatus {
+  NEW
+  FOLLOWING
+  QUOTED
+  WON
+  LOST
+  ARCHIVED
+}
+
+enum FieldType {
+  TEXT
+  NUMBER
+  DATE
+  SELECT
+  TEXTAREA
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  role         Role          @default(SALES)
+  status       AccountStatus @default(ACTIVE)
+  phone        String?
+  department   String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  inquiries    Inquiry[]     @relation("InquiryOwner")
+  followUps    FollowUp[]
+}
+
+model Inquiry {
+  id               String               @id @default(cuid())
+  title            String
+  customerName     String
+  customerCompany  String?
+  contactPhone     String?
+  contactEmail     String?
+  source           String?
+  productInterest  String?
+  estimatedAmount  Float?
+  status           InquiryStatus         @default(NEW)
+  priority         Int                   @default(2)
+  nextFollowUpAt   DateTime?
+  ownerId          String
+  owner            User                  @relation("InquiryOwner", fields: [ownerId], references: [id])
+  followUps        FollowUp[]
+  customValues     InquiryCustomValue[]
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([nextFollowUpAt])
+}
+
+model FollowUp {
+  id             String   @id @default(cuid())
+  inquiryId      String
+  inquiry        Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  method         String
+  content        String
+  nextFollowUpAt DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([inquiryId])
+  @@index([userId])
+}
+
+model CustomField {
+  id          String               @id @default(cuid())
+  label       String
+  key         String               @unique
+  type        FieldType            @default(TEXT)
+  required    Boolean              @default(false)
+  options     String?
+  enabled     Boolean              @default(true)
+  sortOrder   Int                  @default(0)
+  values      InquiryCustomValue[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+}
+
+model InquiryCustomValue {
+  id         String      @id @default(cuid())
+  inquiryId  String
+  inquiry    Inquiry     @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  fieldId    String
+  field      CustomField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  value      String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@unique([inquiryId, fieldId])
+}
+
+model WorkflowStage {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  status      InquiryStatus
+  sortOrder   Int           @default(0)
+  enabled     Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
